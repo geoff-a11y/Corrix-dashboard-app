@@ -74,11 +74,19 @@ router.post('/login', async (req, res) => {
       // Default organization for admin users
       const defaultOrgId = '00000000-0000-0000-0000-000000000001';
 
-      // Get organization name
-      const orgResult = await db.query(
-        'SELECT name FROM organizations WHERE id = $1',
-        [defaultOrgId]
-      );
+      // Try to get organization name, but don't fail if DB unavailable
+      let orgName = 'Corrix';
+      try {
+        const orgResult = await db.query(
+          'SELECT name FROM organizations WHERE id = $1',
+          [defaultOrgId]
+        );
+        if (orgResult.rows[0]?.name) {
+          orgName = orgResult.rows[0].name;
+        }
+      } catch {
+        // DB query failed, use default org name
+      }
 
       const token = jwt.sign(
         {
@@ -97,7 +105,7 @@ router.post('/login', async (req, res) => {
           id: `admin-${normalizedEmail.replace(/[^a-z0-9]/g, '-')}`,
           email: normalizedEmail,
           organizationId: defaultOrgId,
-          organizationName: orgResult.rows[0]?.name || 'Corrix',
+          organizationName: orgName,
           role: 'admin',
         },
       });
