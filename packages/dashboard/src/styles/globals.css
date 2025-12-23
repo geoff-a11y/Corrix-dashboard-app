@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-bg-tertiary text-text-primary min-h-screen;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-bg-tertiary;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-text-muted;
+  }
+}
+
+/* Component utilities */
+@layer components {
+  .card {
+    @apply bg-bg-primary rounded-card shadow-card p-6;
+  }
+
+  .card-secondary {
+    @apply bg-bg-secondary rounded-card p-4;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-accent hover:bg-accent-hover text-white;
+  }
+
+  .btn-secondary {
+    @apply bg-white/10 hover:bg-white/15 text-text-primary;
+  }
+
+  .input {
+    @apply bg-bg-secondary border border-border rounded-lg px-3 py-2 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent;
+  }
+
+  .label {
+    @apply text-sm text-text-secondary font-medium;
+  }
+
+  /* Score badge variants */
+  .score-badge {
+    @apply px-2 py-1 rounded-md text-sm font-semibold;
+  }
+
+  .score-badge-high {
+    @apply bg-score-high/20 text-score-high;
+  }
+
+  .score-badge-medium {
+    @apply bg-score-medium/20 text-score-medium;
+  }
+
+  .score-badge-low {
+    @apply bg-score-low/20 text-score-low;
+  }
+
+  /* Trend indicators */
+  .trend-up {
+    @apply text-score-high;
+  }
+
+  .trend-down {
+    @apply text-score-low;
+  }
+
+  .trend-stable {
+    @apply text-text-muted;
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  .fade-in {
+    animation: fadeIn 0.2s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
