@@ -29,7 +29,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-bg-tertiary flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="card">
+        <div className="bg-bg-primary/50 backdrop-blur rounded-card shadow-card p-6 border border-border-subtle">
           {/* Logo */}
           <div className="flex flex-col items-center justify-center mb-8">
             <img
