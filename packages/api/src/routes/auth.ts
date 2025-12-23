@@ -6,6 +6,15 @@ const router = Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
+// Admin emails that can access the dashboard
+// Set via ADMIN_EMAILS env var (comma-separated) or defaults
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'geoff.gibbins@gmail.com')
+  .split(',')
+  .map((e) => e.trim().toLowerCase());
+
+// Admin password - should be set via environment variable in production
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'corrix-alpha-2024';
+
 // Demo users for development
 const DEMO_USERS = [
   {
@@ -59,8 +68,43 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // In production, check against real user database here
-    return res.status(401).json({ message: 'Invalid credentials' });
+    // Check if email is in admin list
+    const normalizedEmail = email.toLowerCase().trim();
+    if (ADMIN_EMAILS.includes(normalizedEmail) && password === ADMIN_PASSWORD) {
+      // Default organization for admin users
+      const defaultOrgId = '00000000-0000-0000-0000-000000000001';
+
+      // Get organization name
+      const orgResult = await db.query(
+        'SELECT name FROM organizations WHERE id = $1',
+        [defaultOrgId]
+      );
+
+      const token = jwt.sign(
+        {
+          userId: `admin-${normalizedEmail.replace(/[^a-z0-9]/g, '-')}`,
+          email: normalizedEmail,
+          organizationId: defaultOrgId,
+          role: 'admin',
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      return res.json({
+        token,
+        user: {
+          id: `admin-${normalizedEmail.replace(/[^a-z0-9]/g, '-')}`,
+          email: normalizedEmail,
+          organizationId: defaultOrgId,
+          organizationName: orgResult.rows[0]?.name || 'Corrix',
+          role: 'admin',
+        },
+      });
+    }
+
+    // Reject non-admin users
+    return res.status(401).json({ message: 'Invalid credentials or not authorized for dashboard access' });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Internal server error' });
