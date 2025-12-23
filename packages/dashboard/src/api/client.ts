@@ -22,8 +22,13 @@ class ApiClient {
   }
 
   private buildUrl(path: string, params?: QueryParams): string {
-    const url = new URL(path, window.location.origin);
-    url.pathname = `${this.baseUrl}${path}`;
+    // Handle external URLs (production) vs relative paths (development)
+    const isExternalUrl = this.baseUrl.startsWith('http://') || this.baseUrl.startsWith('https://');
+    const fullUrl = isExternalUrl
+      ? `${this.baseUrl}${path}`
+      : `${window.location.origin}${this.baseUrl}${path}`;
+
+    const url = new URL(fullUrl);
 
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
