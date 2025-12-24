@@ -18,8 +18,9 @@ import benchmarksRouter from './routes/benchmarks.js';
 import coachingRouter from './routes/coaching.js';
 // Targeting routes
 import targetingRouter from './routes/targeting.js';
-import { requireAuth, enforceOrgScope } from './middleware/auth.js';
+import { requireAuth, enforceOrgScope, requireAdmin } from './middleware/auth.js';
 import { getRedisClient, isRedisAvailable, closeRedis } from './cache/connection.js';
+import { runAlphaUserSyncJob, getAlphaUserSyncJobStatus } from './jobs/AlphaUserSyncJob.js';
 
 dotenv.config();
 
@@ -75,6 +76,28 @@ app.use('/api/targeting', requireAuth, targetingRouter);
 
 // Signal ingestion (separate auth via extension headers)
 app.use('/api/signals', signalsRouter);
+
+// Admin sync endpoints (protected, admin only)
+app.post('/api/admin/sync', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    console.log('[Admin] Manual sync triggered');
+    await runAlphaUserSyncJob();
+    res.json({ success: true, message: 'Sync completed' });
+  } catch (error) {
+    console.error('[Admin] Sync failed:', error);
+    res.status(500).json({ error: 'Sync failed', message: (error as Error).message });
+  }
+});
+
+app.get('/api/admin/sync/status', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const status = await getAlphaUserSyncJobStatus();
+    res.json(status);
+  } catch (error) {
+    console.error('[Admin] Status check failed:', error);
+    res.status(500).json({ error: 'Status check failed' });
+  }
+});
 
 // Error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
