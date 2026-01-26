@@ -112,4 +112,143 @@ router.get('/:userId/summary', cacheDistributions, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/users/:userId/sub-metrics
+ * Returns detailed sub-metric breakdown for all three dimensions
+ */
+router.get('/:userId/sub-metrics', cacheDistributions, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Mock data - replace with real implementation when data is available
+    const subMetrics = {
+      userId,
+      displayId: anonymizeUserId(userId),
+      results: {
+        overall: 75.5,
+        subMetrics: {
+          outcomeSatisfaction: 78.2,
+          editRatio: 72.8,
+          taskCompletion: 75.5,
+        },
+        insights: [
+          'High outcome satisfaction indicates good task selection',
+          'Edit ratio suggests moderate refinement needed',
+        ],
+      },
+      relationship: {
+        overall: 72.3,
+        subMetrics: {
+          promptQuality: 74.5,
+          verificationRate: 68.9,
+          dialogueDepth: 73.2,
+          criticalEngagement: 72.6,
+        },
+        insights: [
+          'Verification rate below average - encourage more fact-checking',
+          'Good dialogue depth showing proper iteration',
+        ],
+      },
+      resilience: {
+        overall: 70.8,
+        subMetrics: {
+          skillTrajectory: 75.3,
+          errorRecovery: 68.5,
+          adaptation: 68.6,
+        },
+        insights: [
+          'Strong upward trajectory - skills improving over time',
+          'Error recovery needs improvement',
+        ],
+      },
+      dateRange: {
+        start: '2024-01-01',
+        end: '2024-01-25',
+      },
+    };
+
+    res.json(subMetrics);
+  } catch (error) {
+    console.error('[Users] Sub-metrics error:', error);
+    res.status(500).json({ error: 'Failed to fetch user sub-metrics' });
+  }
+});
+
+/**
+ * GET /api/users/:userId/expertise
+ * Returns expertise levels and trajectory across domains
+ */
+router.get('/:userId/expertise', cacheDistributions, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Mock data - replace with real implementation when data is available
+    const expertise = {
+      userId,
+      displayId: anonymizeUserId(userId),
+      overallLevel: 'intermediate',
+      overallScore: 72.5,
+      trajectory: 'improving',
+      trajectoryPercentage: 8.5,
+      byDomain: [
+        {
+          domainId: 'engineering',
+          domainName: 'Software Engineering',
+          level: 'advanced',
+          score: 78.5,
+          trajectory: 'improving',
+          trajectoryPercentage: 12.3,
+          sessionCount: 145,
+          strengths: ['Code review', 'Debugging', 'Architecture'],
+          improvementAreas: ['Testing strategies', 'Performance optimization'],
+        },
+        {
+          domainId: 'design',
+          domainName: 'UI/UX Design',
+          level: 'intermediate',
+          score: 68.2,
+          trajectory: 'stable',
+          trajectoryPercentage: 1.5,
+          sessionCount: 45,
+          strengths: ['User research', 'Wireframing'],
+          improvementAreas: ['Visual design', 'Interaction patterns'],
+        },
+        {
+          domainId: 'data',
+          domainName: 'Data Analysis',
+          level: 'novice',
+          score: 58.9,
+          trajectory: 'improving',
+          trajectoryPercentage: 6.8,
+          sessionCount: 32,
+          strengths: ['Basic queries'],
+          improvementAreas: ['Statistical analysis', 'Data visualization', 'Complex joins'],
+        },
+      ],
+      recommendations: [
+        'Continue focus on engineering tasks where you excel',
+        'Consider structured learning for data analysis fundamentals',
+        'Leverage AI for design inspiration but verify outputs carefully',
+      ],
+      milestones: [
+        {
+          date: '2024-01-15',
+          achievement: 'Reached advanced level in Software Engineering',
+          scoreIncrease: 15.2,
+        },
+        {
+          date: '2024-01-08',
+          achievement: 'Completed 100 AI-assisted coding sessions',
+          scoreIncrease: 8.5,
+        },
+      ],
+    };
+
+    res.json(expertise);
+  } catch (error) {
+    console.error('[Users] Expertise error:', error);
+    res.status(500).json({ error: 'Failed to fetch user expertise' });
+  }
+});
+
 export default router;

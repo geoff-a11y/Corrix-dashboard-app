@@ -500,6 +500,11 @@ export class CoachingAnalyticsService {
       off_piste_invented: 'Invented Context',
       off_piste_looping: 'Looping Detection',
       sycophancy_detection: 'Sycophancy Detection',
+      hollow_feedback_alert: 'Hollow Feedback Alert',
+      critical_engagement: 'Critical Engagement',
+      session_summary_offer: 'Session Summary Offer',
+      validation_reframe: 'Validation Reframe',
+      micro_action: 'Micro Action',
     };
     return displayMap[type] || type;
   }
@@ -521,6 +526,11 @@ export class CoachingAnalyticsService {
       off_piste_invented: 'Flags assumed information',
       off_piste_looping: 'Detects repetitive responses',
       sycophancy_detection: 'Warns about excessive agreement',
+      hollow_feedback_alert: 'Flags generic praise without actionable suggestions',
+      critical_engagement: 'Prompts verification of AI outputs',
+      session_summary_offer: 'Offers end-of-session insights instead of interruptions',
+      validation_reframe: 'Suggests reframing validation-seeking prompts',
+      micro_action: 'Suggests specific small actions instead of generic reminders',
     };
     return descMap[type] || '';
   }
@@ -542,6 +552,11 @@ export class CoachingAnalyticsService {
       off_piste_invented: 'behavior',
       off_piste_looping: 'behavior',
       sycophancy_detection: 'quality',
+      hollow_feedback_alert: 'quality',
+      critical_engagement: 'behavior',
+      session_summary_offer: 'efficiency',
+      validation_reframe: 'behavior',
+      micro_action: 'behavior',
     };
     return catMap[type] || 'quality';
   }

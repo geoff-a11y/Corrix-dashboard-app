@@ -4,9 +4,11 @@ import { api } from '@/api/client';
 interface User {
   id: string;
   email: string;
+  name?: string;
   organizationId: string;
   organizationName: string;
-  role: 'admin' | 'viewer';
+  role: 'admin' | 'team_admin' | 'viewer';
+  teamIds?: string[];
 }
 
 interface AuthContextType {
@@ -14,6 +16,8 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  requestMagicLink: (email: string) => Promise<{ devLink?: string }>;
+  verifyMagicLink: (token: string) => Promise<void>;
   logout: () => void;
   error: string | null;
 }
@@ -69,6 +73,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const requestMagicLink = useCallback(async (email: string) => {
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await api.post<{ message: string; _devLink?: string }>('/auth/magic-link/request', {
+        email,
+      });
+      return { devLink: response._devLink };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to send magic link';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const verifyMagicLink = useCallback(async (token: string) => {
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await api.post<{ token: string; user: User }>('/auth/magic-link/verify', {
+        token,
+      });
+
+      localStorage.setItem(TOKEN_KEY, response.token);
+      localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+      api.setToken(response.token);
+      setUser(response.user);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid or expired link';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
@@ -83,6 +127,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         login,
+        requestMagicLink,
+        verifyMagicLink,
         logout,
         error,
       }}

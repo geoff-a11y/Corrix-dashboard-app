@@ -187,9 +187,32 @@ curl https://YOUR_RAILWAY_URL/health
 
 ### API Auth Test
 ```bash
-# Get a JWT token from your auth flow, then:
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  https://YOUR_RAILWAY_URL/api/targeting/config
+# Test magic link request
+curl -X POST https://YOUR_RAILWAY_URL/api/auth/magic-link/request \
+  -H "Content-Type: application/json" \
+  -d '{"email": "geoff.gibbins@gmail.com"}'
+
+# Or test legacy password login (admin only)
+curl -X POST https://YOUR_RAILWAY_URL/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "geoff.gibbins@gmail.com", "password": "YOUR_ADMIN_PASSWORD"}'
+```
+
+### Admin Account Management
+```sql
+-- Add new admin account (full access)
+INSERT INTO admin_accounts (email, name, role, organization_id)
+VALUES ('new.admin@example.com', 'New Admin', 'admin', '00000000-0000-0000-0000-000000000001');
+
+-- Add team admin (restricted to specific teams)
+INSERT INTO admin_accounts (email, name, role, organization_id, team_ids)
+VALUES (
+  'team.lead@example.com',
+  'Team Lead',
+  'team_admin',
+  '00000000-0000-0000-0000-000000000001',
+  ARRAY['team-uuid-here']::UUID[]
+);
 ```
 
 ### Dashboard Access
@@ -273,7 +296,24 @@ supabase db push
 
 # Option 2: SQL Editor
 # Paste new migration SQL in Supabase dashboard
+
+# Option 3: Run against Railway PostgreSQL
+psql $DATABASE_URL -f packages/api/src/db/migrations/012_admin_accounts.sql
 ```
+
+### Current Migration Files
+- `001_initial_schema.sql` - Core tables
+- `002_seed_demo_data.sql` - Demo data
+- `003_temporal_indicators.sql` - Temporal indicators
+- `004_skill_tracking.sql` - Skills and learning
+- `005_user_metadata.sql` - User metadata
+- `006_benchmarks.sql` - Benchmarking
+- `007_seed_phase2_data.sql` - Phase 2 demo data
+- `008_seed_multiorg_data.sql` - Multi-org data
+- `009_aggregation_tables.sql` - Aggregation tables
+- `010_coaching_outcomes.sql` - Coaching outcomes
+- `011_domain_scores.sql` - Domain scores
+- `012_admin_accounts.sql` - Admin accounts and magic link auth
 
 ---
 

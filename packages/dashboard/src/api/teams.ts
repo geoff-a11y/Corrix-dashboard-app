@@ -36,6 +36,6 @@ export const teamsApi = {
   },
 
   getTeamAnalytics(teamId: string): Promise<TeamAnalytics> {
-    return api.get(`/teams/${teamId}`);
+    return api.get(`/teams/${teamId}/analytics`);
   },
 };

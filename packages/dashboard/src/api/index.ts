@@ -16,3 +16,7 @@ export { coachingApi } from './coaching';
 
 // Targeting API
 export { targetingApi, type TargetingConfig, type TargetingRule } from './targeting';
+
+// Dashboard Redesign APIs
+export { alertsApi } from './alerts';
+export { performanceApi } from './performance';

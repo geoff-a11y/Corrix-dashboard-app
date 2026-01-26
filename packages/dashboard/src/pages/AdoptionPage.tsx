@@ -12,6 +12,7 @@ export function AdoptionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [adoption, setAdoption] = useState<AdoptionMetrics | null>(null);
+  const [engagement, setEngagement] = useState<any>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -33,6 +34,15 @@ export function AdoptionPage() {
           endDate: dateRange.endDate,
         });
         setAdoption(data);
+
+        // Engagement data would be fetched here when API is ready
+        // For now, using mock data for the engagement section
+        setEngagement({
+          sessionsPerUser: { mean: 3.2 },
+          promptsPerSession: { mean: 8.5 },
+          baselineCompletion: { rate: 72, completed: 90, pending: 35 },
+          inactiveUsers: { count: 5, list: [] },
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load adoption data');
       } finally {
@@ -115,6 +125,32 @@ export function AdoptionPage() {
         </div>
       </div>
 
+      {/* Engagement Depth */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card">
+          <p className="text-sm text-text-muted">Avg Sessions/User</p>
+          <p className="text-3xl font-bold text-text-primary mt-1">
+            {engagement?.sessionsPerUser?.mean?.toFixed(1) || '—'}
+          </p>
+          <p className="text-xs text-text-muted mt-1">per week</p>
+        </div>
+        <div className="card">
+          <p className="text-sm text-text-muted">Avg Prompts/Session</p>
+          <p className="text-3xl font-bold text-text-primary mt-1">
+            {engagement?.promptsPerSession?.mean?.toFixed(1) || '—'}
+          </p>
+        </div>
+        <div className="card">
+          <p className="text-sm text-text-muted">Baseline Completion</p>
+          <p className="text-3xl font-bold text-accent mt-1">
+            {engagement?.baselineCompletion?.rate?.toFixed(0) || 0}%
+          </p>
+          <p className="text-xs text-text-muted mt-1">
+            {engagement?.baselineCompletion?.completed || 0} of {(engagement?.baselineCompletion?.completed || 0) + (engagement?.baselineCompletion?.pending || 0)} users
+          </p>
+        </div>
+      </div>
+
       {/* Adoption Curve */}
       {adoption && adoption.cumulativeUsers.length > 0 && (
         <div className="card">
@@ -164,6 +200,31 @@ export function AdoptionPage() {
           </ResponsiveContainer>
         </div>
       )}
+
+      {/* Churn Risk */}
+      <div className="card">
+        <h3 className="text-sm font-medium text-text-secondary mb-4 flex items-center gap-2">
+          <span className="text-score-low">⚠️</span>
+          Engagement Risk
+        </h3>
+        {engagement?.inactiveUsers?.count > 0 ? (
+          <div>
+            <p className="text-text-primary mb-2">
+              {engagement.inactiveUsers.count} users inactive for 7+ days
+            </p>
+            <div className="space-y-2">
+              {engagement.inactiveUsers.list?.slice(0, 5).map((user: any) => (
+                <div key={user.id} className="flex justify-between text-sm">
+                  <span className="text-text-secondary">{user.displayId}</span>
+                  <span className="text-text-muted">Last active: {user.lastActive}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-text-muted">No users at risk - great engagement!</p>
+        )}
+      </div>
 
       {/* Team Adoption */}
       {adoption && adoption.teamAdoption.length > 0 && (

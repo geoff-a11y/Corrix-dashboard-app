@@ -26,7 +26,12 @@ export type AdvancedCoachingType =
   | 'off_piste_constraint'
   | 'off_piste_invented'
   | 'off_piste_looping'
-  | 'sycophancy_detection';
+  | 'sycophancy_detection'
+  | 'hollow_feedback_alert'
+  | 'critical_engagement'
+  | 'session_summary_offer'
+  | 'validation_reframe'
+  | 'micro_action';
 
 export type DreyfusStage =
   | 'novice'
@@ -329,6 +334,31 @@ export const COACHING_TYPE_DISPLAY: Record<AdvancedCoachingType, {
     name: 'Sycophancy Detection',
     description: 'Warns about excessive agreement',
     category: 'quality',
+  },
+  hollow_feedback_alert: {
+    name: 'Hollow Feedback Alert',
+    description: 'Flags generic praise without actionable suggestions',
+    category: 'quality',
+  },
+  critical_engagement: {
+    name: 'Critical Engagement',
+    description: 'Prompts verification of AI outputs',
+    category: 'behavior',
+  },
+  session_summary_offer: {
+    name: 'Session Summary Offer',
+    description: 'Offers end-of-session insights instead of interruptions',
+    category: 'efficiency',
+  },
+  validation_reframe: {
+    name: 'Validation Reframe',
+    description: 'Suggests reframing validation-seeking prompts',
+    category: 'behavior',
+  },
+  micro_action: {
+    name: 'Micro Action',
+    description: 'Suggests specific small actions instead of generic reminders',
+    category: 'behavior',
   },
 };
 

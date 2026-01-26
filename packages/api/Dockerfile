@@ -20,6 +20,8 @@ RUN npm run build --workspace=@corrix/api
 
 WORKDIR /app/packages/api
 
+# Expose port (Railway sets PORT env var)
 EXPOSE 3001
 
-CMD ["npm", "start"]
+# Start the server
+CMD ["node", "dist/index.js"]

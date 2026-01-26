@@ -9,32 +9,29 @@ type NavSection = { section: string; items: NavItem[] };
 
 const navSections: NavSection[] = [
   {
-    section: 'Core',
+    section: 'Dashboard',
     items: [
-      { to: '/overview', label: 'Overview', icon: '📊' },
-      { to: '/teams', label: 'Teams', icon: '👥' },
+      { to: '/home', label: 'Home', icon: '🏠' },
+      { to: '/performance', label: 'Performance', icon: '📊' },
+    ],
+  },
+  {
+    section: 'Analysis',
+    items: [
+      { to: '/behaviors', label: 'Behaviors', icon: '🎯' },
       { to: '/adoption', label: 'Adoption', icon: '📈' },
-    ],
-  },
-  {
-    section: 'Behavioral Intelligence',
-    items: [
-      { to: '/behaviors', label: 'Behaviors', icon: '🎯', end: true },
-      { to: '/behaviors/deep-dive', label: 'Deep Dive', icon: '🔬', indent: true },
-      { to: '/temporal', label: 'Temporal Indicators', icon: '⏱️' },
-    ],
-  },
-  {
-    section: 'Development',
-    items: [
-      { to: '/skills', label: 'Skill Development', icon: '📚' },
-      { to: '/benchmarks', label: 'Benchmarks', icon: '🏆' },
     ],
   },
   {
     section: 'Coaching',
     items: [
       { to: '/coaching', label: 'Coaching Insights', icon: '💡' },
+    ],
+  },
+  {
+    section: 'Admin',
+    items: [
+      { to: '/settings', label: 'Settings', icon: '⚙️' },
     ],
   },
 ];

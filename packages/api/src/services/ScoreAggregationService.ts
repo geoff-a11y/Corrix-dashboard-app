@@ -1,5 +1,18 @@
 import db from '../db/connection.js';
-import type { ScoreDistribution, ThreeRsScores, ScoreTrend, TrendPoint } from '@corrix/shared';
+import type {
+  ScoreDistribution,
+  ThreeRsScores,
+  ScoreTrend,
+  TrendPoint,
+  ThreeRsTimePatterns,
+  ThreeRsByDayPart,
+  ThreeRsByDayOfWeek,
+  ThreeRsWithSampleSize,
+  ThreeRsTimeInsight,
+  DomainScore,
+  DomainScoresSubmission,
+  DomainScoresResponse,
+} from '@corrix/shared';
 
 interface DistributionParams {
   organizationId: string;
@@ -21,6 +34,14 @@ interface BreakdownParams {
   dimension: 'results' | 'relationship' | 'resilience';
   organizationId: string;
   teamId?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+interface DomainScoreParams {
+  organizationId: string;
+  teamId?: string;
+  userId?: string;
   startDate?: string;
   endDate?: string;
 }
@@ -277,5 +298,371 @@ export class ScoreAggregationService {
         direction: absoluteChange > 1 ? 'up' : absoluteChange < -1 ? 'down' : 'stable',
       },
     };
+  }
+
+  /**
+   * Get 3R scores broken down by time patterns (day part and day of week)
+   */
+  async getThreeRsTimePatterns(params: DistributionParams): Promise<ThreeRsTimePatterns> {
+    const { organizationId, teamId, startDate, endDate } = params;
+
+    const conditions: string[] = ['u.organization_id = $1'];
+    const queryParams: string[] = [organizationId];
+    let paramIndex = 2;
+
+    if (teamId) {
+      conditions.push(`u.team_id = $${paramIndex++}`);
+      queryParams.push(teamId);
+    }
+    if (startDate) {
+      conditions.push(`ds.date >= $${paramIndex++}`);
+      queryParams.push(startDate);
+    }
+    if (endDate) {
+      conditions.push(`ds.date <= $${paramIndex++}`);
+      queryParams.push(endDate);
+    }
+
+    const whereClause = conditions.join(' AND ');
+
+    // Query for day part analysis (morning/afternoon/evening based on peak_hour)
+    const dayPartQuery = `
+      SELECT
+        CASE
+          WHEN peak_hour >= 6 AND peak_hour < 12 THEN 'morning'
+          WHEN peak_hour >= 12 AND peak_hour < 18 THEN 'afternoon'
+          ELSE 'evening'
+        END as day_part,
+        AVG(results_score) as results,
+        AVG(relationship_score) as relationship,
+        AVG(resilience_score) as resilience,
+        COUNT(*) as sample_size
+      FROM daily_scores ds
+      JOIN users u ON ds.user_id = u.id
+      WHERE ${whereClause}
+        AND results_score IS NOT NULL
+        AND peak_hour IS NOT NULL
+      GROUP BY day_part
+    `;
+
+    // Query for day of week analysis
+    const dayOfWeekQuery = `
+      SELECT
+        TO_CHAR(date, 'Day') as day_name,
+        EXTRACT(DOW FROM date) as day_num,
+        AVG(results_score) as results,
+        AVG(relationship_score) as relationship,
+        AVG(resilience_score) as resilience,
+        COUNT(*) as sample_size
+      FROM daily_scores ds
+      JOIN users u ON ds.user_id = u.id
+      WHERE ${whereClause}
+        AND results_score IS NOT NULL
+      GROUP BY day_name, day_num
+      ORDER BY day_num
+    `;
+
+    // Query for summary stats
+    const summaryQuery = `
+      SELECT
+        COUNT(*) as total_sessions,
+        MIN(date) as start_date,
+        MAX(date) as end_date
+      FROM daily_scores ds
+      JOIN users u ON ds.user_id = u.id
+      WHERE ${whereClause}
+    `;
+
+    try {
+      const [dayPartResult, dayOfWeekResult, summaryResult] = await Promise.all([
+        db.query(dayPartQuery, queryParams),
+        db.query(dayOfWeekQuery, queryParams),
+        db.query(summaryQuery, queryParams),
+      ]);
+
+      // Process day part data
+      const byDayPart = this.processDayPartData(dayPartResult.rows);
+
+      // Process day of week data
+      const byDayOfWeek = this.processDayOfWeekData(dayOfWeekResult.rows);
+
+      // Summary
+      const summary = {
+        hasEnoughData: (summaryResult.rows[0]?.total_sessions || 0) >= 5,
+        totalSessions: parseInt(summaryResult.rows[0]?.total_sessions || 0),
+        dateRange: {
+          start: summaryResult.rows[0]?.start_date?.toISOString().split('T')[0] || '',
+          end: summaryResult.rows[0]?.end_date?.toISOString().split('T')[0] || '',
+        },
+      };
+
+      return { byDayPart, byDayOfWeek, summary };
+    } catch (error) {
+      console.error('[ScoreAggregation] Time patterns error:', error);
+      return {
+        byDayPart: null,
+        byDayOfWeek: null,
+        summary: { hasEnoughData: false, totalSessions: 0, dateRange: { start: '', end: '' } },
+      };
+    }
+  }
+
+  private processDayPartData(rows: any[]): ThreeRsByDayPart | null {
+    if (rows.length < 2) return null;
+
+    const emptyScores: ThreeRsWithSampleSize = { results: 0, relationship: 0, resilience: 0, sampleSize: 0 };
+    const result: ThreeRsByDayPart = {
+      morning: { ...emptyScores },
+      afternoon: { ...emptyScores },
+      evening: { ...emptyScores },
+      insights: [],
+    };
+
+    for (const row of rows) {
+      const period = row.day_part as 'morning' | 'afternoon' | 'evening';
+      result[period] = {
+        results: Math.round(parseFloat(row.results) || 0),
+        relationship: Math.round(parseFloat(row.relationship) || 0),
+        resilience: Math.round(parseFloat(row.resilience) || 0),
+        sampleSize: parseInt(row.sample_size) || 0,
+      };
+    }
+
+    // Generate insights
+    result.insights = this.generateDayPartInsights(result);
+
+    return result;
+  }
+
+  private processDayOfWeekData(rows: any[]): ThreeRsByDayOfWeek | null {
+    if (rows.length < 3) return null;
+
+    const scores: Record<string, ThreeRsWithSampleSize> = {};
+
+    for (const row of rows) {
+      const dayName = row.day_name.trim();
+      scores[dayName] = {
+        results: Math.round(parseFloat(row.results) || 0),
+        relationship: Math.round(parseFloat(row.relationship) || 0),
+        resilience: Math.round(parseFloat(row.resilience) || 0),
+        sampleSize: parseInt(row.sample_size) || 0,
+      };
+    }
+
+    const insights = this.generateDayOfWeekInsights(scores);
+
+    return { scores, insights };
+  }
+
+  private generateDayPartInsights(data: ThreeRsByDayPart): ThreeRsTimeInsight[] {
+    const insights: ThreeRsTimeInsight[] = [];
+    const periods = ['morning', 'afternoon', 'evening'] as const;
+    const metrics = [
+      { key: 'results' as const, name: 'Results', action: 'Schedule verification-heavy tasks' },
+      { key: 'relationship' as const, name: 'Relationship', action: 'Do complex prompting work' },
+      { key: 'resilience' as const, name: 'Resilience', action: 'Focus on skill-building activities' },
+    ];
+
+    for (const metric of metrics) {
+      let bestPeriod: typeof periods[number] = periods[0];
+      let worstPeriod: typeof periods[number] = periods[0];
+      let bestScore = data[bestPeriod][metric.key];
+      let worstScore = bestScore;
+
+      for (const period of periods) {
+        if (data[period].sampleSize < 2) continue;
+        const score = data[period][metric.key];
+        if (score > bestScore) {
+          bestScore = score;
+          bestPeriod = period;
+        }
+        if (score < worstScore) {
+          worstScore = score;
+          worstPeriod = period;
+        }
+      }
+
+      const difference = bestScore - worstScore;
+
+      if (difference >= 8 && bestPeriod !== worstPeriod) {
+        insights.push({
+          metric: metric.key,
+          insight: `${metric.name} score is ${difference} points higher in ${bestPeriod}s`,
+          bestTime: bestPeriod,
+          worstTime: worstPeriod,
+          difference,
+          actionable: `${metric.action} for ${bestPeriod}s when ${metric.name} peaks`,
+        });
+      }
+    }
+
+    return insights;
+  }
+
+  private generateDayOfWeekInsights(scores: Record<string, ThreeRsWithSampleSize>): ThreeRsTimeInsight[] {
+    const insights: ThreeRsTimeInsight[] = [];
+    const days = Object.keys(scores);
+    const metrics = [
+      { key: 'results' as const, name: 'Results', action: 'Schedule high-stakes AI work' },
+      { key: 'relationship' as const, name: 'Relationship', action: 'Plan complex prompting sessions' },
+      { key: 'resilience' as const, name: 'Resilience', action: 'Do learning and skill-building work' },
+    ];
+
+    for (const metric of metrics) {
+      let bestDay = days[0];
+      let worstDay = days[0];
+      let bestScore = scores[bestDay]?.[metric.key] || 0;
+      let worstScore = bestScore;
+
+      for (const day of days) {
+        if (scores[day].sampleSize < 1) continue;
+        const score = scores[day][metric.key];
+        if (score > bestScore) {
+          bestScore = score;
+          bestDay = day;
+        }
+        if (score < worstScore) {
+          worstScore = score;
+          worstDay = day;
+        }
+      }
+
+      const difference = bestScore - worstScore;
+
+      if (difference >= 10 && bestDay !== worstDay) {
+        insights.push({
+          metric: metric.key,
+          insight: `${metric.name} score is ${difference} points higher on ${bestDay}s`,
+          bestTime: bestDay,
+          worstTime: worstDay,
+          difference,
+          actionable: `${metric.action} for ${bestDay}s when ${metric.name} peaks`,
+        });
+      }
+    }
+
+    return insights;
+  }
+
+  // ============================================================
+  // DOMAIN SCORES
+  // ============================================================
+
+  async getDomainScores(params: DomainScoreParams): Promise<DomainScoresResponse> {
+    const { organizationId, teamId, userId, startDate, endDate } = params;
+
+    // Build query with filters
+    const conditions: string[] = ['u.organization_id = $1'];
+    const queryParams: (string | number)[] = [organizationId];
+    let paramIndex = 2;
+
+    if (teamId) {
+      conditions.push(`u.team_id = $${paramIndex++}`);
+      queryParams.push(teamId);
+    }
+    if (userId) {
+      conditions.push(`dds.user_id = $${paramIndex++}`);
+      queryParams.push(userId);
+    }
+    if (startDate) {
+      conditions.push(`dds.date >= $${paramIndex++}`);
+      queryParams.push(startDate);
+    }
+    if (endDate) {
+      conditions.push(`dds.date <= $${paramIndex++}`);
+      queryParams.push(endDate);
+    }
+
+    // Get latest domain scores grouped by domain
+    const query = `
+      WITH latest_scores AS (
+        SELECT DISTINCT ON (dds.domain_id)
+          dds.domain_id,
+          dds.domain_name,
+          dds.overall,
+          dds.results,
+          dds.relationship,
+          dds.resilience,
+          dds.interaction_count,
+          dds.trend,
+          dds.calculated_at
+        FROM domain_daily_scores dds
+        JOIN users u ON dds.user_id = u.id
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY dds.domain_id, dds.date DESC
+      )
+      SELECT * FROM latest_scores
+      ORDER BY overall DESC
+    `;
+
+    const result = await db.query(query, queryParams);
+
+    const domains: DomainScore[] = result.rows.map(row => ({
+      domainId: row.domain_id,
+      domainName: row.domain_name,
+      overall: row.overall,
+      results: row.results,
+      relationship: row.relationship,
+      resilience: row.resilience,
+      interactionCount: row.interaction_count,
+      trend: row.trend,
+      calculatedAt: row.calculated_at,
+    }));
+
+    // Calculate summary
+    const totalDomains = domains.length;
+    const averageScore = totalDomains > 0
+      ? Math.round(domains.reduce((sum, d) => sum + d.overall, 0) / totalDomains)
+      : 0;
+    const topPerforming = domains.length > 0 ? domains[0].domainId : null;
+    const needsAttention = domains.length > 0 ? domains[domains.length - 1].domainId : null;
+
+    return {
+      domains,
+      summary: {
+        totalDomains,
+        averageScore,
+        topPerforming,
+        needsAttention: needsAttention !== topPerforming ? needsAttention : null,
+      },
+    };
+  }
+
+  async saveDomainScores(submission: DomainScoresSubmission): Promise<void> {
+    const { userId, organizationId, teamId, date, domains } = submission;
+
+    // Insert each domain score
+    for (const domain of domains) {
+      await db.query(`
+        INSERT INTO domain_daily_scores (
+          user_id, organization_id, team_id, date,
+          domain_id, domain_name, overall, results, relationship, resilience,
+          interaction_count, trend, calculated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ON CONFLICT (user_id, domain_id, date)
+        DO UPDATE SET
+          overall = EXCLUDED.overall,
+          results = EXCLUDED.results,
+          relationship = EXCLUDED.relationship,
+          resilience = EXCLUDED.resilience,
+          interaction_count = EXCLUDED.interaction_count,
+          trend = EXCLUDED.trend,
+          calculated_at = EXCLUDED.calculated_at
+      `, [
+        userId,
+        organizationId || null,
+        teamId || null,
+        date,
+        domain.domainId,
+        domain.domainName,
+        domain.overall,
+        domain.results,
+        domain.relationship,
+        domain.resilience,
+        domain.interactionCount,
+        domain.trend,
+        domain.calculatedAt,
+      ]);
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { ScoreDistribution, ScoreTrend, ThreeRsScores } from '@corrix/shared';
+import type { ScoreDistribution, ScoreTrend, ThreeRsScores, ThreeRsTimePatterns, DomainScoresResponse } from '@corrix/shared';
 
 interface ScoreParams {
   organizationId?: string;
@@ -18,6 +18,28 @@ interface TrendParams {
   duration: number;
 }
 
+export interface DomainBreakdown {
+  domains: Array<{
+    domainId: string;
+    domainName: string;
+    results: number;
+    relationship: number;
+    resilience: number;
+    overall: number;
+    sessionCount: number;
+    trend: 'improving' | 'stable' | 'declining';
+    trendPercentage: number;
+  }>;
+  summary: {
+    totalDomains: number;
+    totalSessions: number;
+    averageOverall: number;
+    topPerformingDomain: string;
+    needsAttentionDomain: string;
+    insights: string[];
+  };
+}
+
 export const scoresApi = {
   getDistribution(params: ScoreParams): Promise<ScoreDistribution> {
     return api.get('/scores/distribution', params);
@@ -33,5 +55,17 @@ export const scoresApi = {
 
   getTrends(params: TrendParams): Promise<ScoreTrend> {
     return api.get('/scores/trends', params);
+  },
+
+  getTimePatterns(params: ScoreParams): Promise<ThreeRsTimePatterns> {
+    return api.get('/scores/time-patterns', params);
+  },
+
+  getDomainScores(params: ScoreParams): Promise<DomainScoresResponse> {
+    return api.get('/scores/domains', params);
+  },
+
+  getDomainBreakdown(params: ScoreParams): Promise<DomainBreakdown> {
+    return api.get('/scores/domain-breakdown', params);
   },
 };

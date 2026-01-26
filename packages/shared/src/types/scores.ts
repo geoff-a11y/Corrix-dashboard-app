@@ -79,3 +79,76 @@ export interface ScoreTrend {
     direction: 'up' | 'down' | 'stable';
   };
 }
+
+// 3R scores by day part (morning/afternoon/evening)
+export interface ThreeRsByDayPart {
+  morning: ThreeRsWithSampleSize;
+  afternoon: ThreeRsWithSampleSize;
+  evening: ThreeRsWithSampleSize;
+  insights: ThreeRsTimeInsight[];
+}
+
+// 3R scores by day of week
+export interface ThreeRsByDayOfWeek {
+  scores: Record<string, ThreeRsWithSampleSize>;  // 'Monday' -> scores
+  insights: ThreeRsTimeInsight[];
+}
+
+// 3R scores with sample size for statistical validity
+export interface ThreeRsWithSampleSize extends ThreeRsScores {
+  sampleSize: number;  // Number of sessions this is based on
+}
+
+// Insight about 3R variation by time
+export interface ThreeRsTimeInsight {
+  metric: 'results' | 'relationship' | 'resilience';
+  insight: string;           // "Results score is 18% higher in mornings"
+  bestTime: string;          // "morning" or "Tuesday"
+  worstTime: string;         // "evening" or "Friday"
+  difference: number;        // Score difference between best and worst
+  actionable: string;        // "Schedule verification-heavy tasks for mornings"
+}
+
+// Combined 3R time patterns response
+export interface ThreeRsTimePatterns {
+  byDayPart: ThreeRsByDayPart | null;
+  byDayOfWeek: ThreeRsByDayOfWeek | null;
+  summary: {
+    hasEnoughData: boolean;
+    totalSessions: number;
+    dateRange: { start: string; end: string };
+  };
+}
+
+// Per-domain 3R scores
+export interface DomainScore {
+  domainId: string;
+  domainName: string;
+  overall: number;
+  results: number;
+  relationship: number;
+  resilience: number;
+  interactionCount: number;
+  trend: 'improving' | 'stable' | 'declining' | 'insufficient_data';
+  calculatedAt: string;  // ISO timestamp
+}
+
+// Domain scores submission from extension
+export interface DomainScoresSubmission {
+  userId: string;
+  organizationId?: string;
+  teamId?: string;
+  date: string;  // ISO date
+  domains: DomainScore[];
+}
+
+// Domain scores response
+export interface DomainScoresResponse {
+  domains: DomainScore[];
+  summary: {
+    totalDomains: number;
+    averageScore: number;
+    topPerforming: string | null;  // Domain ID
+    needsAttention: string | null;  // Domain ID with lowest score
+  };
+}

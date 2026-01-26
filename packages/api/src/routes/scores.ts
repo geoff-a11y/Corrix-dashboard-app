@@ -101,4 +101,164 @@ router.get('/trends', cacheTrends, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/v1/scores/time-patterns
+ * 3R scores broken down by time of day and day of week
+ */
+router.get('/time-patterns', cacheDistributions, async (req, res) => {
+  try {
+    const { organizationId, teamId, startDate, endDate } = req.query;
+
+    const patterns = await scoreService.getThreeRsTimePatterns({
+      organizationId: organizationId as string,
+      teamId: teamId as string | undefined,
+      startDate: startDate as string | undefined,
+      endDate: endDate as string | undefined,
+    });
+
+    res.json(patterns);
+  } catch (error) {
+    console.error('[Scores] Time patterns error:', error);
+    res.status(500).json({ error: 'Failed to fetch 3R time patterns' });
+  }
+});
+
+/**
+ * GET /api/v1/scores/domains
+ * Get per-domain 3R scores
+ */
+router.get('/domains', cacheDistributions, async (req, res) => {
+  try {
+    const { organizationId, teamId, userId, startDate, endDate } = req.query;
+
+    const domainScores = await scoreService.getDomainScores({
+      organizationId: organizationId as string,
+      teamId: teamId as string | undefined,
+      userId: userId as string | undefined,
+      startDate: startDate as string | undefined,
+      endDate: endDate as string | undefined,
+    });
+
+    res.json(domainScores);
+  } catch (error) {
+    console.error('[Scores] Domain scores error:', error);
+    res.status(500).json({ error: 'Failed to fetch domain scores' });
+  }
+});
+
+/**
+ * POST /api/v1/scores/domains
+ * Submit per-domain 3R scores from extension
+ */
+router.post('/domains', async (req, res) => {
+  try {
+    const { userId, organizationId, teamId, date, domains } = req.body;
+
+    if (!userId || !date || !Array.isArray(domains)) {
+      return res.status(400).json({ error: 'Missing required fields: userId, date, domains' });
+    }
+
+    await scoreService.saveDomainScores({
+      userId,
+      organizationId,
+      teamId,
+      date,
+      domains,
+    });
+
+    res.json({ success: true, domainCount: domains.length });
+  } catch (error) {
+    console.error('[Scores] Save domain scores error:', error);
+    res.status(500).json({ error: 'Failed to save domain scores' });
+  }
+});
+
+/**
+ * GET /api/v1/scores/domain-breakdown
+ * Returns 3Rs scores broken down by domain
+ */
+router.get('/domain-breakdown', cacheDistributions, async (req, res) => {
+  try {
+    const { organizationId, teamId, userId, startDate, endDate } = req.query;
+
+    // Mock data - replace with real implementation when data is available
+    const domainBreakdown = {
+      domains: [
+        {
+          domainId: 'engineering',
+          domainName: 'Software Engineering',
+          results: 78.5,
+          relationship: 72.3,
+          resilience: 75.8,
+          overall: 75.5,
+          sessionCount: 145,
+          trend: 'improving' as const,
+          trendPercentage: 8.2,
+        },
+        {
+          domainId: 'design',
+          domainName: 'UI/UX Design',
+          results: 82.1,
+          relationship: 79.4,
+          resilience: 80.2,
+          overall: 80.6,
+          sessionCount: 98,
+          trend: 'stable' as const,
+          trendPercentage: 1.3,
+        },
+        {
+          domainId: 'marketing',
+          domainName: 'Marketing & Content',
+          results: 75.2,
+          relationship: 68.9,
+          resilience: 71.4,
+          overall: 71.8,
+          sessionCount: 67,
+          trend: 'improving' as const,
+          trendPercentage: 5.7,
+        },
+        {
+          domainId: 'data',
+          domainName: 'Data Analysis',
+          results: 70.4,
+          relationship: 65.8,
+          resilience: 68.2,
+          overall: 68.1,
+          sessionCount: 52,
+          trend: 'declining' as const,
+          trendPercentage: -3.4,
+        },
+        {
+          domainId: 'general',
+          domainName: 'General Tasks',
+          results: 68.9,
+          relationship: 64.2,
+          resilience: 66.5,
+          overall: 66.5,
+          sessionCount: 180,
+          trend: 'stable' as const,
+          trendPercentage: 0.8,
+        },
+      ],
+      summary: {
+        totalDomains: 5,
+        totalSessions: 542,
+        averageOverall: 72.5,
+        topPerformingDomain: 'design',
+        needsAttentionDomain: 'data',
+        insights: [
+          'Design tasks show highest scores across all 3Rs',
+          'Data analysis domain declining - consider additional training',
+          'General tasks have high volume but lower scores',
+        ],
+      },
+    };
+
+    res.json(domainBreakdown);
+  } catch (error) {
+    console.error('[Scores] Domain breakdown error:', error);
+    res.status(500).json({ error: 'Failed to fetch domain breakdown' });
+  }
+});
+
 export default router;

@@ -282,4 +282,121 @@ router.get('/deep-summary', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/behaviors/mode-scores
+ * Returns average scores by collaboration mode
+ */
+router.get('/mode-scores', async (req, res) => {
+  try {
+    const { organizationId, teamId, userId, startDate, endDate } = req.query;
+
+    // Mock data - replace with real implementation when data is available
+    const modeScores = {
+      modes: [
+        {
+          mode: 'copilot',
+          displayName: 'Copilot',
+          avgCorrixScore: 72.5,
+          avgResults: 75.2,
+          avgRelationship: 68.9,
+          avgResilience: 73.4,
+          sessionCount: 245,
+          percentage: 45.2,
+        },
+        {
+          mode: 'coach',
+          displayName: 'Coach',
+          avgCorrixScore: 78.3,
+          avgResults: 80.1,
+          avgRelationship: 76.8,
+          avgResilience: 78.0,
+          sessionCount: 180,
+          percentage: 33.2,
+        },
+        {
+          mode: 'consultant',
+          displayName: 'Consultant',
+          avgCorrixScore: 68.4,
+          avgResults: 70.5,
+          avgRelationship: 65.2,
+          avgResilience: 69.5,
+          sessionCount: 85,
+          percentage: 15.7,
+        },
+        {
+          mode: 'agent',
+          displayName: 'Agent',
+          avgCorrixScore: 65.8,
+          avgResults: 68.2,
+          avgRelationship: 62.5,
+          avgResilience: 66.7,
+          sessionCount: 32,
+          percentage: 5.9,
+        },
+      ],
+      totalSessions: 542,
+      insights: [
+        'Coach mode shows highest average scores across all dimensions',
+        'Copilot mode is most frequently used but has lower relationship scores',
+        'Agent mode needs improvement in relationship dimension',
+      ],
+    };
+
+    res.json(modeScores);
+  } catch (error) {
+    console.error('[Behaviors] Mode scores error:', error);
+    res.status(500).json({ error: 'Failed to fetch collaboration mode scores' });
+  }
+});
+
+/**
+ * GET /api/behaviors/usage-patterns
+ * Returns usage pattern data including time-based patterns and critical engagement
+ */
+router.get('/usage-patterns', async (req, res) => {
+  try {
+    const { organizationId, teamId, userId, startDate, endDate } = req.query;
+
+    // Mock data - replace with real implementation when data is available
+    const usagePatterns = {
+      byHour: Array.from({ length: 24 }, (_, hour) => ({
+        hour,
+        sessionCount: Math.floor(Math.random() * 50) + 10,
+        avgCorrixScore: 60 + Math.random() * 20,
+        avgResults: 60 + Math.random() * 20,
+        avgRelationship: 60 + Math.random() * 20,
+        avgResilience: 60 + Math.random() * 20,
+      })),
+      byDayPart: {
+        morning: { hours: '6am-12pm', sessionCount: 185, avgCorrixScore: 76.2, avgResults: 78.5, avgRelationship: 74.1, avgResilience: 76.0 },
+        afternoon: { hours: '12pm-6pm', sessionCount: 245, avgCorrixScore: 72.8, avgResults: 74.3, avgRelationship: 71.5, avgResilience: 72.6 },
+        evening: { hours: '6pm-12am', sessionCount: 95, avgCorrixScore: 68.4, avgResults: 70.2, avgRelationship: 66.8, avgResilience: 68.2 },
+        night: { hours: '12am-6am', sessionCount: 17, avgCorrixScore: 64.5, avgResults: 66.1, avgRelationship: 62.3, avgResilience: 65.1 },
+      },
+      peakProductivity: {
+        bestHour: 9,
+        bestDayPart: 'morning',
+        bestDay: 'Tuesday',
+        scoreVariation: 12.5,
+        recommendation: 'Schedule complex AI tasks requiring verification during morning hours (8am-11am) for optimal performance.',
+      },
+      criticalEngagement: {
+        lowEngagementUsers: [
+          { userId: 'user-1', displayId: 'User #A1B2', engagementRate: 8.2, sessionCount: 45, riskLevel: 'high' },
+          { userId: 'user-2', displayId: 'User #C3D4', engagementRate: 12.5, sessionCount: 38, riskLevel: 'medium' },
+          { userId: 'user-3', displayId: 'User #E5F6', engagementRate: 15.8, sessionCount: 52, riskLevel: 'medium' },
+        ],
+        averageEngagementRate: 28.4,
+        healthyThreshold: 25.0,
+        insight: '3 users showing low critical engagement - may indicate over-reliance on AI without verification',
+      },
+    };
+
+    res.json(usagePatterns);
+  } catch (error) {
+    console.error('[Behaviors] Usage patterns error:', error);
+    res.status(500).json({ error: 'Failed to fetch usage patterns' });
+  }
+});
+
 export default router;

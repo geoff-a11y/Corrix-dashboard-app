@@ -14,5 +14,9 @@ export * from './types/behaviors-deep';
 // Coaching Types
 export * from './types/coaching';
 
+// Dashboard Redesign Types
+export * from './types/alerts';
+export * from './types/performance';
+
 // Constants
 export * from './constants';

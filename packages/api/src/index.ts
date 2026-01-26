@@ -18,6 +18,9 @@ import benchmarksRouter from './routes/benchmarks.js';
 import coachingRouter from './routes/coaching.js';
 // Targeting routes
 import targetingRouter from './routes/targeting.js';
+// Dashboard redesign routes
+import alertsRouter from './routes/alerts.js';
+import performanceRouter from './routes/performance.js';
 import { requireAuth, enforceOrgScope, requireAdmin } from './middleware/auth.js';
 import { getRedisClient, isRedisAvailable, closeRedis } from './cache/connection.js';
 import { runAlphaUserSyncJob, getAlphaUserSyncJobStatus } from './jobs/AlphaUserSyncJob.js';
@@ -73,6 +76,10 @@ app.use('/api/coaching', requireAuth, enforceOrgScope, coachingRouter);
 
 // Targeting routes (protected, admin only)
 app.use('/api/targeting', requireAuth, targetingRouter);
+
+// Dashboard redesign routes (protected)
+app.use('/api/alerts', requireAuth, enforceOrgScope, alertsRouter);
+app.use('/api/performance', requireAuth, enforceOrgScope, performanceRouter);
 
 // Signal ingestion (separate auth via extension headers)
 app.use('/api/signals', signalsRouter);

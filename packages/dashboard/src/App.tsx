@@ -5,21 +5,20 @@ import { ScopeProvider } from '@/contexts/ScopeContext';
 import { DateRangeProvider } from '@/contexts/DateRangeContext';
 import { Layout } from '@/components/Layout';
 import { LoginPage } from '@/pages/LoginPage';
-import { OverviewPage } from '@/pages/OverviewPage';
-import { TeamsPage } from '@/pages/TeamsPage';
+import { VerifyPage } from '@/pages/VerifyPage';
+import { HomePage } from '@/pages/HomePage';
+import { PerformancePage } from '@/pages/PerformancePage';
 import { BehaviorsPage } from '@/pages/BehaviorsPage';
 import { AdoptionPage } from '@/pages/AdoptionPage';
-import { TemporalIndicatorsPage } from '@/pages/TemporalIndicatorsPage';
-import { BehaviorDeepDivePage } from '@/pages/BehaviorDeepDivePage';
-import { SkillDevelopmentPage } from '@/pages/SkillDevelopmentPage';
-import { BenchmarksPage } from '@/pages/BenchmarksPage';
 import { CoachingInsightsPage } from '@/pages/CoachingInsightsPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 
 function App() {
   return (
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/verify" element={<VerifyPage />} />
         <Route
           path="/"
           element={
@@ -32,16 +31,13 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/overview" replace />} />
-          <Route path="overview" element={<OverviewPage />} />
-          <Route path="teams" element={<TeamsPage />} />
+          <Route index element={<Navigate to="/home" replace />} />
+          <Route path="home" element={<HomePage />} />
+          <Route path="performance" element={<PerformancePage />} />
           <Route path="behaviors" element={<BehaviorsPage />} />
-          <Route path="behaviors/deep-dive" element={<BehaviorDeepDivePage />} />
-          <Route path="temporal" element={<TemporalIndicatorsPage />} />
-          <Route path="skills" element={<SkillDevelopmentPage />} />
-          <Route path="benchmarks" element={<BenchmarksPage />} />
           <Route path="adoption" element={<AdoptionPage />} />
           <Route path="coaching" element={<CoachingInsightsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </AuthProvider>

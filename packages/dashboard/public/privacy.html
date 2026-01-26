@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Corrix</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --border: #e5e7eb;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg);
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        h3 {
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+        .subtitle {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        .updated {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+        .summary {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .summary h2 {
+            margin-top: 0;
+            border: none;
+            padding: 0;
+        }
+        .summary ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        .summary li {
+            margin-bottom: 0.5rem;
+        }
+        ul, ol {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+        strong {
+            color: var(--text);
+        }
+        a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+        }
+        .contact {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Privacy Policy</h1>
+    <p class="subtitle">Corrix Chrome Extension</p>
+    <p class="updated"><em>Last Updated: December 29, 2024</em></p>
+
+    <p>Human Machines Group LLC ("we", "us", or "our") operates the Corrix Chrome extension ("Extension"). This Privacy Policy explains how we collect, use, and protect your information when you use our Extension.</p>
+
+    <div class="summary">
+        <h2>Summary</h2>
+        <p>Corrix is designed with privacy as a core principle:</p>
+        <ul>
+            <li><strong>All analysis runs locally</strong> in your browser</li>
+            <li><strong>Conversation content is never transmitted</strong> to our servers</li>
+            <li><strong>ML models run on-device</strong> via Transformers.js</li>
+            <li><strong>You control</strong> what data, if any, is shared</li>
+        </ul>
+    </div>
+
+    <h2>1. Information We Collect</h2>
+
+    <h3>1.1 Information Processed Locally (Never Transmitted)</h3>
+    <p>The following information is processed entirely within your browser and is <strong>never sent to our servers</strong>:</p>
+    <ul>
+        <li>Your prompts and AI responses</li>
+        <li>Conversation content</li>
+        <li>Text you type or copy</li>
+        <li>The specific content of your interactions with AI platforms</li>
+    </ul>
+
+    <h3>1.2 Information Stored Locally</h3>
+    <p>The following is stored in your browser's local storage:</p>
+    <ul>
+        <li>Your collaboration scores and metrics</li>
+        <li>Notification preferences and settings</li>
+        <li>Session statistics (prompt counts, response times)</li>
+        <li>Coaching tip effectiveness data</li>
+        <li>Skill progression data</li>
+    </ul>
+
+    <h3>1.3 Information Collected with Your Consent</h3>
+    <p>If you choose to create an account and enable cloud sync, we collect:</p>
+    <ul>
+        <li><strong>Account Information</strong>: Email address (via Clerk authentication)</li>
+        <li><strong>Anonymized Usage Metrics</strong>: Aggregated, non-identifiable patterns such as:
+            <ul>
+                <li>Average prompt quality scores</li>
+                <li>Verification behavior rates</li>
+                <li>Session duration statistics</li>
+                <li>Notification response patterns</li>
+            </ul>
+        </li>
+        <li><strong>Organization Data</strong> (Enterprise users only): Team membership, aggregated team scores</li>
+    </ul>
+    <p>We do <strong>not</strong> collect:</p>
+    <ul>
+        <li>The content of your prompts or AI responses</li>
+        <li>Personal identifying information beyond email</li>
+        <li>Browsing history outside of supported AI platforms</li>
+        <li>Keyboard or mouse activity</li>
+    </ul>
+
+    <h2>2. How We Use Information</h2>
+
+    <h3>2.1 Local Processing</h3>
+    <p>We use locally-processed information to:</p>
+    <ul>
+        <li>Analyze your AI collaboration patterns</li>
+        <li>Generate personalized coaching nudges</li>
+        <li>Calculate your Collaboration Results Index scores</li>
+        <li>Provide session insights and weekly summaries</li>
+    </ul>
+
+    <h3>2.2 Cloud-Synced Data (Optional)</h3>
+    <p>If you enable cloud sync, we use your anonymized data to:</p>
+    <ul>
+        <li>Sync your scores across devices</li>
+        <li>Provide dashboard access to your historical data</li>
+        <li>Generate organizational insights (Enterprise only)</li>
+        <li>Improve our coaching algorithms through aggregate analysis</li>
+    </ul>
+
+    <h2>3. Third-Party Services</h2>
+
+    <h3>3.1 Authentication (Clerk)</h3>
+    <p>We use Clerk for secure authentication. When you sign in:</p>
+    <ul>
+        <li>Clerk processes your email and authentication credentials</li>
+        <li>We receive only your email and a user identifier</li>
+        <li>See Clerk's privacy policy: <a href="https://clerk.com/privacy">https://clerk.com/privacy</a></li>
+    </ul>
+
+    <h3>3.2 Data Storage (Supabase)</h3>
+    <p>For users with cloud sync enabled:</p>
+    <ul>
+        <li>Anonymized metrics are stored in Supabase</li>
+        <li>Data is encrypted in transit and at rest</li>
+        <li>See Supabase's privacy policy: <a href="https://supabase.com/privacy">https://supabase.com/privacy</a></li>
+    </ul>
+
+    <h3>3.3 AI Platforms</h3>
+    <p>The Extension operates on Claude.ai (Anthropic), ChatGPT (OpenAI), and Gemini (Google). We do <strong>not</strong> send any data to these platforms. We only observe your interactions within your browser to provide coaching.</p>
+
+    <h3>3.4 Machine Learning Models</h3>
+    <p>We use Hugging Face Transformers.js to run ML models:</p>
+    <ul>
+        <li>All models run <strong>entirely in your browser</strong></li>
+        <li>No data is sent to Hugging Face servers</li>
+        <li>Models are cached locally after first download</li>
+    </ul>
+
+    <h2>4. Data Retention</h2>
+
+    <h3>4.1 Local Data</h3>
+    <ul>
+        <li>Session data: Cleared when you close your browser or manually clear</li>
+        <li>Preferences: Retained until you uninstall the Extension</li>
+        <li>Historical scores: Retained locally for up to 90 days</li>
+    </ul>
+
+    <h3>4.2 Cloud Data (If Enabled)</h3>
+    <ul>
+        <li>Account data: Retained while your account is active</li>
+        <li>Usage metrics: Retained for up to 2 years for trend analysis</li>
+        <li>Deleted upon account deletion request</li>
+    </ul>
+
+    <h2>5. Data Sharing</h2>
+    <p>We do <strong>not</strong> sell your personal information.</p>
+    <p>We may share anonymized, aggregated data:</p>
+    <ul>
+        <li>With enterprise customers (their organization's aggregate data only)</li>
+        <li>For research purposes (fully anonymized, no individual identification possible)</li>
+        <li>As required by law</li>
+    </ul>
+
+    <h2>6. Your Rights and Choices</h2>
+
+    <h3>6.1 Access and Export</h3>
+    <p>You can:</p>
+    <ul>
+        <li>View all locally stored data via the Extension's options page</li>
+        <li>Export your data in JSON format</li>
+        <li>Access cloud data through your dashboard</li>
+    </ul>
+
+    <h3>6.2 Deletion</h3>
+    <p>You can:</p>
+    <ul>
+        <li>Clear local data: Options → Clear All Data</li>
+        <li>Delete cloud account: Settings → Delete Account</li>
+        <li>Uninstall the Extension to remove all local data</li>
+    </ul>
+
+    <h3>6.3 Opt-Out</h3>
+    <p>You can:</p>
+    <ul>
+        <li>Use the Extension without creating an account (local-only mode)</li>
+        <li>Disable cloud sync at any time</li>
+        <li>Disable specific notification types</li>
+        <li>Adjust privacy settings in Options</li>
+    </ul>
+
+    <h2>7. Security</h2>
+    <p>We implement industry-standard security measures:</p>
+    <ul>
+        <li>HTTPS encryption for all network communications</li>
+        <li>Secure authentication via Clerk</li>
+        <li>No storage of sensitive content (prompts, responses)</li>
+        <li>Regular security reviews</li>
+    </ul>
+
+    <h2>8. Children's Privacy</h2>
+    <p>The Extension is not intended for users under 13 years of age. We do not knowingly collect information from children.</p>
+
+    <h2>9. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy periodically. We will notify you of significant changes via Extension update notes, email (if you have an account), or notice in the Extension.</p>
+
+    <div class="contact">
+        <h2>10. Contact Us</h2>
+        <p>If you have questions about this Privacy Policy or your data:</p>
+        <p><strong>Human Machines Group LLC</strong><br>
+        Email: <a href="mailto:privacy@corrix.ai">privacy@corrix.ai</a></p>
+    </div>
+
+    <h2>11. California Privacy Rights (CCPA)</h2>
+    <p>California residents have additional rights:</p>
+    <ul>
+        <li>Right to know what personal information is collected</li>
+        <li>Right to delete personal information</li>
+        <li>Right to opt-out of sale (we do not sell data)</li>
+        <li>Right to non-discrimination</li>
+    </ul>
+    <p>To exercise these rights, contact us at <a href="mailto:privacy@corrix.ai">privacy@corrix.ai</a>.</p>
+
+    <h2>12. European Privacy Rights (GDPR)</h2>
+    <p>EU/EEA residents have additional rights:</p>
+    <ul>
+        <li>Right to access your data</li>
+        <li>Right to rectification</li>
+        <li>Right to erasure ("right to be forgotten")</li>
+        <li>Right to restrict processing</li>
+        <li>Right to data portability</li>
+        <li>Right to object</li>
+    </ul>
+    <p><strong>Legal Basis for Processing</strong>: Consent (you choose to install and use the Extension)</p>
+    <p><strong>Data Controller</strong>: Human Machines Group LLC</p>
+    <p>To exercise these rights, contact us at <a href="mailto:privacy@corrix.ai">privacy@corrix.ai</a>.</p>
+
+    <footer>
+        <p>&copy; 2024 Human Machines Group LLC. All rights reserved.</p>
+    </footer>
+</body>
+</html>

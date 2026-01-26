@@ -322,9 +322,11 @@ export class BehaviorAnalyticsService {
           SELECT
             bs.collaboration_mode,
             bs.prompt_quality_score,
-            bs.session_duration_seconds
+            bs.session_duration_seconds,
+            ds.corrix_score
           FROM behavioral_signals bs
           JOIN users u ON bs.user_id = u.id
+          LEFT JOIN daily_scores ds ON bs.user_id = ds.user_id AND DATE(bs.timestamp) = ds.date
           WHERE ${conditions.join(' AND ')}
             AND bs.collaboration_mode IS NOT NULL
         ),
@@ -332,7 +334,8 @@ export class BehaviorAnalyticsService {
           SELECT
             collaboration_mode,
             COUNT(*) as count,
-            COALESCE(AVG(prompt_quality_score), 0) as avg_score,
+            COALESCE(AVG(prompt_quality_score), 0) as avg_prompt_quality,
+            COALESCE(AVG(corrix_score), 0) as avg_score,
             COALESCE(SUM(session_duration_seconds), 0) as total_duration
           FROM filtered
           GROUP BY collaboration_mode
@@ -347,6 +350,7 @@ export class BehaviorAnalyticsService {
           ms.collaboration_mode,
           ms.count,
           ms.avg_score,
+          ms.avg_prompt_quality,
           ms.total_duration,
           CASE WHEN t.total_duration > 0
             THEN (ms.total_duration * 100.0 / t.total_duration)
