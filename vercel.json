@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build --workspace=@corrix/shared && npm run build --workspace=@corrix/dashboard",
   "outputDirectory": "packages/dashboard/dist",
-  "framework": null,
+  "framework": "vite",
   "installCommand": "npm install",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
