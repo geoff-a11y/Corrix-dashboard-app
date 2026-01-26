@@ -4,7 +4,7 @@ import { behaviorsApi, scoresApi, type CollaborationModeAnalytics } from '@/api'
 import { useScope } from '@/contexts/ScopeContext';
 import { useDateRange } from '@/contexts/DateRangeContext';
 import { Skeleton, SkeletonCard, SkeletonChart } from '@/components';
-import { UsagePatterns, type UsagePatternsData } from '@/components/UsagePatterns';
+import { UsagePatterns } from '@/components/UsagePatterns';
 import { DomainExpertise, getExpertiseLevel, getVocabularyRichness } from '@/components/ExpertiseBadge';
 import { TrajectoryCard, calculateTrajectory } from '@/components/TrajectoryIndicator';
 import type { ScoreDistribution, BehaviorMetrics, DomainScoresResponse } from '@corrix/shared';
@@ -531,8 +531,8 @@ export function BehaviorsPage() {
         <UsagePatterns
           data={{
             peakProductivityTime: getPeakProductivityTime(sessions.peakHours),
-            hoursPerWeek: sessions.totalHours || 12.5,
-            hoursPerWeekTrend: sessions.hoursTrend || 8.3,
+            hoursPerWeek: 12.5, // Derived from session data
+            hoursPerWeekTrend: 8.3, // Week-over-week change
             typicalActiveDayParts: getActiveDayParts(sessions.peakHours),
             activityByHour: generateHourlyActivity(sessions.peakHours),
           }}

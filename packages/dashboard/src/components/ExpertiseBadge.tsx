@@ -112,7 +112,7 @@ export function ExpertiseBadge({ level, domain, size = 'md', showLabel = true }:
   );
 }
 
-export function VocabularyIndicator({ level, score, size = 'md' }: VocabularyIndicatorProps) {
+export function VocabularyIndicator({ level, score, size: _size = 'md' }: VocabularyIndicatorProps) {
   const config = VOCABULARY_CONFIG[level];
 
   return (

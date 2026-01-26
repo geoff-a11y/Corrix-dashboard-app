@@ -243,7 +243,7 @@ export function TrajectoryTimeline({
 }) {
   return (
     <div className="space-y-2">
-      {points.map((point, index) => (
+      {points.map((point, _index) => (
         <div key={point.date} className="flex items-center gap-3">
           <span className="text-xs text-text-muted w-20">
             {new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
