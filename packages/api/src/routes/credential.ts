@@ -60,6 +60,44 @@ interface DecodedAssessment {
   interview_probes?: Array<{ area: string; probe: string; rationale: string }>;
 }
 
+// Normalize enum values from AI output to database-allowed values
+function normalizeLearningTrajectory(value: string): 'accelerating' | 'steady' | 'declining' {
+  const v = value?.toLowerCase();
+  if (['accelerating', 'upward', 'improving', 'growing', 'rising'].includes(v)) return 'accelerating';
+  if (['declining', 'downward', 'decreasing', 'falling'].includes(v)) return 'declining';
+  return 'steady';
+}
+
+function normalizeVocabGrowth(value: string): 'rapid' | 'moderate' | 'stable' {
+  const v = value?.toLowerCase();
+  if (['rapid', 'fast', 'quick', 'high'].includes(v)) return 'rapid';
+  if (['stable', 'slow', 'minimal', 'low'].includes(v)) return 'stable';
+  return 'moderate';
+}
+
+function normalizeTopicBreadth(value: string): 'focused' | 'moderate' | 'broad' {
+  const v = value?.toLowerCase();
+  if (['focused', 'narrow', 'specialized', 'deep'].includes(v)) return 'focused';
+  if (['broad', 'wide', 'diverse', 'varied'].includes(v)) return 'broad';
+  return 'moderate';
+}
+
+function normalizeSwitchingAwareness(value: string): 'high' | 'some' | 'low' {
+  const v = value?.toLowerCase();
+  if (['high', 'strong', 'excellent', 'good'].includes(v)) return 'high';
+  if (['low', 'poor', 'weak', 'minimal'].includes(v)) return 'low';
+  return 'some';
+}
+
+function normalizeDomainExpertise(value: string): 'novice' | 'advanced_beginner' | 'competent' | 'proficient' | 'expert' {
+  const v = value?.toLowerCase();
+  if (['expert', 'master', 'advanced'].includes(v)) return 'expert';
+  if (['proficient', 'skilled'].includes(v)) return 'proficient';
+  if (['competent', 'capable', 'intermediate'].includes(v)) return 'competent';
+  if (['advanced_beginner', 'beginner', 'learning'].includes(v)) return 'advanced_beginner';
+  return 'novice';
+}
+
 function expandCompact(c: CompactAssessment): DecodedAssessment {
   const expanded: DecodedAssessment = {
     version: c.v,
@@ -309,14 +347,14 @@ router.post('/generate', async (req: Request, res: Response) => {
         decoded.modes.consulting_pct,
         decoded.modes.supervising_pct,
         decoded.modes.delegating_pct,
-        decoded.modes.switching_awareness,
+        normalizeSwitchingAwareness(decoded.modes.switching_awareness),
         decoded.usage.peak_time,
         decoded.usage.weekly_hours_estimate,
         decoded.usage.weekly_interactions_estimate,
         decoded.usage.critical_engagement_rate,
-        decoded.usage.learning_trajectory,
-        decoded.usage.vocabulary_growth,
-        decoded.usage.topic_breadth,
+        normalizeLearningTrajectory(decoded.usage.learning_trajectory),
+        normalizeVocabGrowth(decoded.usage.vocabulary_growth),
+        normalizeTopicBreadth(decoded.usage.topic_breadth),
         decoded.usage.knowledge_transfer,
         decoded.observations.strengths,
         decoded.observations.growth_opportunities,
@@ -345,7 +383,7 @@ router.post('/generate', async (req: Request, res: Response) => {
             credential_id, domain_name, domain_pct, domain_expertise,
             domain_results, domain_relationship, domain_resilience, domain_order
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [id, domain.name, domain.pct, domain.expertise, domain.results, domain.relationship, domain.resilience, i + 1]
+          [id, domain.name, domain.pct, normalizeDomainExpertise(domain.expertise), domain.results, domain.relationship, domain.resilience, i + 1]
         );
       }
     }
