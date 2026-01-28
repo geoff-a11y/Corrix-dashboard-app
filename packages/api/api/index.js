@@ -1340,6 +1340,266 @@ app.get('/api/skills/trajectory/:userId', async (req, res) => {
   });
 });
 
+// ============ Credential System ============
+
+const CREDENTIAL_TEAM_ID = 'a0000000-0000-0000-0000-000000000002';
+
+function generateCredentialId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let id = 'CRX-';
+  for (let i = 0; i < 8; i++) {
+    if (i === 4) id += '-';
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id;
+}
+
+function expandCompact(c) {
+  return {
+    version: c.v,
+    generated_at: c.ts,
+    platform_detected: c.p,
+    conversation_count_analyzed: c.n,
+    scores: {
+      overall: c.s.o,
+      results: { overall: c.s.r.o, decision_quality: c.s.r.d, output_accuracy: c.s.r.a, efficiency: c.s.r.e },
+      relationship: { overall: c.s.l.o, appropriateness_of_reliance: c.s.l.r, trust_calibration: c.s.l.t, dialogue_quality: c.s.l.q },
+      resilience: { overall: c.s.i.o, cognitive_sustainability: c.s.i.c, skill_trajectory: c.s.i.s, expertise_preservation: c.s.i.x },
+    },
+    modes: { primary: c.m.p, approving_pct: c.m.a, consulting_pct: c.m.c, supervising_pct: c.m.s, delegating_pct: c.m.d, switching_awareness: c.m.w },
+    domains: c.do.map(d => ({ name: d.n, pct: d.pct, expertise: d.x, results: d.r, relationship: d.l, resilience: d.i })),
+    usage: { peak_time: c.u.pt, weekly_hours_estimate: c.u.wh, weekly_interactions_estimate: c.u.wi, critical_engagement_rate: c.u.ce, learning_trajectory: c.u.lt, vocabulary_growth: c.u.vg, topic_breadth: c.u.tb, knowledge_transfer: c.u.kt },
+    observations: { strengths: c.ob.st, growth_opportunities: c.ob.go, mode_insight: c.ob.mi, domain_insight: c.ob.di, risk_flag: c.ob.rf, recommendations: c.ob.rc },
+    profile: c.pr ? { type: c.pr.t, description: c.pr.d } : undefined,
+    red_flags: c.rf,
+    interview_probes: c.ip ? c.ip.map(p => ({ area: p.a, probe: p.p, rationale: p.r })) : undefined,
+  };
+}
+
+function decodeCredential(encodedText) {
+  let base64 = '';
+  const crxMatch = encodedText.match(/CRX1:([A-Za-z0-9+/=]+)/);
+  if (crxMatch) {
+    base64 = crxMatch[1];
+  } else {
+    const fallbackMatch = encodedText.match(/(eyJ[A-Za-z0-9+/=]{50,})/);
+    if (fallbackMatch) base64 = fallbackMatch[1];
+  }
+  if (!base64) throw new Error('Invalid format: Could not find encoded data');
+  base64 = base64.replace(/\s/g, '');
+  const json = Buffer.from(base64, 'base64').toString('utf-8');
+  const parsed = JSON.parse(json);
+  if (parsed.v && parsed.s) return expandCompact(parsed);
+  if (!parsed.scores) throw new Error('Missing scores data');
+  return parsed;
+}
+
+function calculateQualificationRating(score) {
+  if (score >= 90) return 'exceptional';
+  if (score >= 80) return 'advanced';
+  if (score >= 70) return 'proficient';
+  if (score >= 60) return 'competent';
+  return 'developing';
+}
+
+// Generate credential
+app.post('/api/credential/generate', async (req, res) => {
+  try {
+    const { email, encodedData, holderName } = req.body;
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Valid email required' });
+    }
+
+    let decoded;
+    try {
+      decoded = decodeCredential(encodedData);
+    } catch (e) {
+      return res.status(400).json({ error: `Could not decode: ${e.message}` });
+    }
+
+    const rawScore = decoded.scores.overall;
+    const calibratedScore = rawScore; // Simplified - no calibration in this version
+    const qualificationRating = calculateQualificationRating(calibratedScore);
+    const credentialId = generateCredentialId();
+    const profileType = decoded.profile?.type || `${decoded.modes.primary.charAt(0).toUpperCase() + decoded.modes.primary.slice(1)} Collaborator`;
+    const verificationUrl = `https://dashboard.corrix.ai/verify/${credentialId}`;
+
+    if (!supabase) {
+      return res.status(500).json({ error: 'Database not configured' });
+    }
+
+    const { data: inserted, error } = await supabase
+      .from('credentials')
+      .insert({
+        credential_id: credentialId,
+        email: email.toLowerCase().trim(),
+        holder_name: holderName || null,
+        platform_detected: decoded.platform_detected,
+        raw_overall_score: rawScore,
+        calibrated_overall_score: calibratedScore,
+        calibration_version: '1.0',
+        conversation_count_analyzed: decoded.conversation_count_analyzed,
+        assessment_version: decoded.version,
+        qualification_rating: qualificationRating,
+        profile_type: profileType,
+        profile_description: decoded.profile?.description || decoded.observations.mode_insight,
+        results_overall: decoded.scores.results.overall,
+        results_decision_quality: decoded.scores.results.decision_quality,
+        results_output_accuracy: decoded.scores.results.output_accuracy,
+        results_efficiency: decoded.scores.results.efficiency,
+        relationship_overall: decoded.scores.relationship.overall,
+        relationship_appropriateness_of_reliance: decoded.scores.relationship.appropriateness_of_reliance,
+        relationship_trust_calibration: decoded.scores.relationship.trust_calibration,
+        relationship_dialogue_quality: decoded.scores.relationship.dialogue_quality,
+        resilience_overall: decoded.scores.resilience.overall,
+        resilience_cognitive_sustainability: decoded.scores.resilience.cognitive_sustainability,
+        resilience_skill_trajectory: decoded.scores.resilience.skill_trajectory,
+        resilience_expertise_preservation: decoded.scores.resilience.expertise_preservation,
+        mode_primary: decoded.modes.primary,
+        mode_approving_pct: decoded.modes.approving_pct,
+        mode_consulting_pct: decoded.modes.consulting_pct,
+        mode_supervising_pct: decoded.modes.supervising_pct,
+        mode_delegating_pct: decoded.modes.delegating_pct,
+        mode_switching_awareness: decoded.modes.switching_awareness,
+        usage_peak_time: decoded.usage.peak_time,
+        usage_weekly_hours: decoded.usage.weekly_hours_estimate,
+        usage_weekly_interactions: decoded.usage.weekly_interactions_estimate,
+        usage_critical_engagement_rate: decoded.usage.critical_engagement_rate,
+        usage_learning_trajectory: decoded.usage.learning_trajectory,
+        usage_vocabulary_growth: decoded.usage.vocabulary_growth,
+        usage_topic_breadth: decoded.usage.topic_breadth,
+        usage_knowledge_transfer: decoded.usage.knowledge_transfer,
+        obs_strengths: decoded.observations.strengths,
+        obs_growth_opportunities: decoded.observations.growth_opportunities,
+        obs_mode_insight: decoded.observations.mode_insight,
+        obs_domain_insight: decoded.observations.domain_insight,
+        obs_risk_flag: decoded.observations.risk_flag,
+        recommendations: decoded.observations.recommendations,
+        interview_probes: JSON.stringify(decoded.interview_probes || []),
+        raw_assessment_json: JSON.stringify(decoded),
+        team_id: CREDENTIAL_TEAM_ID,
+        verification_url: verificationUrl,
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error('[Credential] Insert error:', error);
+      return res.status(500).json({ error: 'Failed to save credential' });
+    }
+
+    // Insert domains
+    if (decoded.domains && decoded.domains.length > 0) {
+      for (let i = 0; i < decoded.domains.length; i++) {
+        const domain = decoded.domains[i];
+        await supabase.from('credential_domains').insert({
+          credential_id: inserted.id,
+          domain_name: domain.name,
+          domain_pct: domain.pct,
+          domain_expertise: domain.expertise,
+          domain_results: domain.results,
+          domain_relationship: domain.relationship,
+          domain_resilience: domain.resilience,
+          domain_order: i + 1,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      credential: {
+        id: inserted.id,
+        credential_id: credentialId,
+        verification_url: verificationUrl,
+        qualification_rating: qualificationRating,
+        calibrated_score: calibratedScore,
+        raw_score: rawScore,
+        percentile: null,
+        profile_type: profileType,
+        holder_name: holderName || null,
+      },
+    });
+  } catch (error) {
+    console.error('[Credential] Generation error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Verify credential (public)
+app.get('/api/credential/verify/:credentialId', async (req, res) => {
+  try {
+    const { credentialId } = req.params;
+    if (!supabase) return res.status(500).json({ error: 'Database not configured' });
+
+    const { data: credential, error } = await supabase
+      .from('credentials')
+      .select('credential_id, holder_name, qualification_rating, calibrated_overall_score, results_overall, relationship_overall, resilience_overall, profile_type, issued_at, expires_at, is_verified')
+      .eq('credential_id', credentialId)
+      .single();
+
+    if (error || !credential) {
+      return res.status(404).json({ error: 'Credential not found', valid: false });
+    }
+
+    const isExpired = credential.expires_at && new Date(credential.expires_at) < new Date();
+    res.json({
+      valid: credential.is_verified !== false && !isExpired,
+      credential_id: credential.credential_id,
+      holder_name: credential.holder_name,
+      qualification_rating: credential.qualification_rating,
+      overall_score: credential.calibrated_overall_score,
+      scores: {
+        results: credential.results_overall,
+        relationship: credential.relationship_overall,
+        resilience: credential.resilience_overall,
+      },
+      profile_type: credential.profile_type,
+      issued_at: credential.issued_at,
+      expires_at: credential.expires_at,
+      is_expired: isExpired,
+    });
+  } catch (error) {
+    console.error('[Credential] Verify error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get full credential (for PDF)
+app.get('/api/credential/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!supabase) return res.status(500).json({ error: 'Database not configured' });
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const { data: credential, error } = await supabase
+      .from('credentials')
+      .select('*')
+      .eq(isUuid ? 'id' : 'credential_id', id)
+      .single();
+
+    if (error || !credential) {
+      return res.status(404).json({ error: 'Credential not found' });
+    }
+
+    const { data: domains } = await supabase
+      .from('credential_domains')
+      .select('*')
+      .eq('credential_id', credential.id)
+      .order('domain_order');
+
+    res.json({
+      ...credential,
+      domains: domains || [],
+      interview_probes: typeof credential.interview_probes === 'string'
+        ? JSON.parse(credential.interview_probes)
+        : credential.interview_probes,
+    });
+  } catch (error) {
+    console.error('[Credential] Get error:', error);
+    res.status(500).json({ error: 'Failed to fetch credential' });
+  }
+});
+
 // Catch-all for unimplemented routes
 app.all('/api/*', (req, res) => {
   res.status(404).json({ message: `Route ${req.method} ${req.path} not implemented yet` });
