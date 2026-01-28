@@ -23,7 +23,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/verify" element={<VerifyPage />} />
         <Route path="/baseline" element={<BaselinePage />} />
-        <Route path="/credential" element={<CredentialPage />} />
+        <Route path="/assessment" element={<CredentialPage />} />
+        <Route path="/credential" element={<Navigate to="/assessment" replace />} />
         <Route path="/verify/:credentialId" element={<CredentialVerifyPage />} />
         <Route
           path="/"

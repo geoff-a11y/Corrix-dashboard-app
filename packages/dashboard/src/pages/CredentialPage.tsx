@@ -645,6 +645,11 @@ export default function CredentialPage() {
             </a>
           </p>
           <p className="mt-1">The Collaboration Results Index</p>
+          <p className="mt-3">
+            <a href="https://corrix.ai/privacy" className="text-gray-500 hover:text-gray-400 underline">
+              Privacy Policy
+            </a>
+          </p>
         </div>
       </footer>
     </div>
