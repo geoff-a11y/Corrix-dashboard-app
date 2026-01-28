@@ -371,7 +371,8 @@ router.post('/generate', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[Credential] Generation error:', error);
-    res.status(500).json({ error: 'Server error' });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ error: 'Server error', details: errorMessage });
   }
 });
 
