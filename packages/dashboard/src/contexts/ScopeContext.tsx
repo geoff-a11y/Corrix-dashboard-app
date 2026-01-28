@@ -68,15 +68,17 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Load organizations on mount - filter to user's org only to prevent 403 errors
+  // Load organizations on mount - admin users see all orgs, others see only their own
   useEffect(() => {
     async function fetchOrganizations() {
       try {
         const data = await organizationsApi.listOrganizations();
-        // Filter to only show the user's organization
-        const filteredOrgs = user?.organizationId
-          ? data.filter(org => org.id === user.organizationId)
-          : data;
+        // Admin users can see all organizations, others see only their own
+        const filteredOrgs = user?.role === 'admin'
+          ? data
+          : user?.organizationId
+            ? data.filter(org => org.id === user.organizationId)
+            : data;
         setOrganizations(filteredOrgs);
       } catch (err) {
         console.error('Failed to load organizations:', err);

@@ -67,9 +67,20 @@ export function requireTeamAdminOrAbove(req: AuthenticatedRequest, res: Response
 }
 
 // Ensure user can only access their organization's data
+// Admin users can access any organization by specifying organizationId
 export function enforceOrgScope(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const requestedOrgId = req.query.organizationId || req.params.orgId;
 
+  // Admin users can access any organization
+  if (req.user?.role === 'admin') {
+    // If no org specified, use their default
+    if (!requestedOrgId) {
+      req.query.organizationId = req.user?.organizationId;
+    }
+    return next();
+  }
+
+  // Non-admin users are restricted to their organization
   if (requestedOrgId && requestedOrgId !== req.user?.organizationId) {
     return res.status(403).json({ error: 'Access denied' });
   }
