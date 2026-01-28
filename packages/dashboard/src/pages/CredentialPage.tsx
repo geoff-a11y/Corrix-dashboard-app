@@ -27,42 +27,67 @@ function CopyPromptSection({ onCopied }: { onCopied: () => void }) {
 
   return (
     <div className="text-center space-y-8">
+      {/* Hero Section */}
       <div className="space-y-4">
-        <h1 className="text-4xl font-bold text-white">AI Collaboration Credential</h1>
+        <h1 className="text-4xl font-bold text-white">AI Collaboration Assessment</h1>
         <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-          Get a professional credential that validates your AI collaboration skills.
-          Perfect for job applications and professional development.
+          Get a professional credential and advice on your AI collaboration skills.
+        </p>
+        <p className="text-sm text-[#7877df] font-medium">
+          Takes about 2 minutes
         </p>
       </div>
 
+      {/* Credibility Bar */}
+      <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+        <span className="flex items-center gap-1">
+          <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          Research-backed methodology
+        </span>
+        <span className="flex items-center gap-1">
+          <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          Verifiable credentials
+        </span>
+      </div>
+
+      {/* Steps Card */}
       <div className="bg-gray-800 rounded-xl p-8 max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4 text-left">
-          <div className="w-10 h-10 rounded-full bg-[#7877df] flex items-center justify-center text-white font-bold">
+          <div className="w-10 h-10 rounded-full bg-[#7877df] flex items-center justify-center text-white font-bold shrink-0">
             1
           </div>
           <div>
-            <h3 className="font-semibold text-white">Copy the credential prompt</h3>
-            <p className="text-sm text-gray-400">Click the button below to copy</p>
+            <h3 className="font-semibold text-white">Copy the assessment prompt</h3>
+            <p className="text-sm text-gray-400">Click the button below to copy it to your clipboard</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 text-left">
-          <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 font-bold">
+          <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 font-bold shrink-0">
             2
           </div>
           <div>
-            <h3 className="font-semibold text-gray-300">Paste into ChatGPT, Claude, or Gemini</h3>
-            <p className="text-sm text-gray-500">The AI will analyze your collaboration patterns</p>
+            <h3 className="font-semibold text-gray-300">Start a new chat and paste the prompt</h3>
+            <p className="text-sm text-gray-500">
+              Open ChatGPT, Claude, or Gemini in a new conversation and paste the prompt.
+              The AI will analyze your recent collaboration patterns.
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 text-left">
-          <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 font-bold">
+          <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 font-bold shrink-0">
             3
           </div>
           <div>
-            <h3 className="font-semibold text-gray-300">Return with the output to get your credential</h3>
-            <p className="text-sm text-gray-500">Receive a verifiable PDF credential</p>
+            <h3 className="font-semibold text-gray-300">Come back and paste the result</h3>
+            <p className="text-sm text-gray-500">
+              Copy the AI's response (starts with CRX1:) and paste it here to generate your credential
+            </p>
           </div>
         </div>
 
@@ -75,39 +100,91 @@ function CopyPromptSection({ onCopied }: { onCopied: () => void }) {
               : 'bg-[#7877df] hover:bg-[#6665c9] text-white'
           )}
         >
-          {copied ? 'Copied! Now paste in your AI tool...' : 'Copy Credential Prompt'}
+          {copied ? 'Copied! Now paste in your AI tool...' : 'Copy Assessment Prompt'}
         </button>
       </div>
 
+      {/* What You'll Get */}
       <div className="max-w-2xl mx-auto text-left bg-gray-800/50 rounded-xl p-6">
-        <h3 className="font-semibold text-white mb-3">What's included in your credential:</h3>
-        <ul className="space-y-2 text-gray-400 text-sm">
-          <li className="flex items-center gap-2">
-            <span className="text-[#7877df]">✓</span>
-            Professional qualification rating (Exceptional to Developing)
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-[#7877df]">✓</span>
-            Detailed Three Rs analysis (Results, Relationship, Resilience)
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-[#7877df]">✓</span>
-            AI collaboration profile type
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-[#7877df]">✓</span>
-            Downloadable PDF reports (full and summary versions)
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-[#7877df]">✓</span>
-            Shareable verification link
-          </li>
-        </ul>
+        <h3 className="font-semibold text-white mb-4">What you'll receive:</h3>
+        <div className="grid md:grid-cols-2 gap-4 text-sm">
+          <div className="space-y-3">
+            <div className="flex items-start gap-2">
+              <span className="text-[#7877df] mt-0.5">✓</span>
+              <div>
+                <span className="text-gray-300 font-medium">Qualification Rating</span>
+                <p className="text-gray-500 text-xs">From Exceptional to Developing, calibrated against other professionals</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-[#7877df] mt-0.5">✓</span>
+              <div>
+                <span className="text-gray-300 font-medium">Three Rs Analysis</span>
+                <p className="text-gray-500 text-xs">Results (output quality), Relationship (collaboration style), Resilience (skill growth)</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-[#7877df] mt-0.5">✓</span>
+              <div>
+                <span className="text-gray-300 font-medium">Collaboration Profile</span>
+                <p className="text-gray-500 text-xs">Your working style with AI tools (e.g., Strategic Consultant, Technical Collaborator)</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-start gap-2">
+              <span className="text-[#7877df] mt-0.5">✓</span>
+              <div>
+                <span className="text-gray-300 font-medium">Personalized Recommendations</span>
+                <p className="text-gray-500 text-xs">Specific advice to improve your AI collaboration effectiveness</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-[#7877df] mt-0.5">✓</span>
+              <div>
+                <span className="text-gray-300 font-medium">PDF Credential</span>
+                <p className="text-gray-500 text-xs">Downloadable report to share with employers or add to your portfolio</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-[#7877df] mt-0.5">✓</span>
+              <div>
+                <span className="text-gray-300 font-medium">Verification Link</span>
+                <p className="text-gray-500 text-xs">Shareable URL so others can verify your credential is authentic</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <p className="text-sm text-gray-500">
-        Works with ChatGPT, Claude, and Gemini. Your data stays private.
-      </p>
+      {/* Sample Preview */}
+      <div className="max-w-2xl mx-auto bg-gradient-to-r from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700">
+        <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Sample Credential Preview</p>
+        <div className="flex items-center justify-between">
+          <div className="text-left">
+            <p className="text-2xl font-bold text-white">72</p>
+            <p className="text-xs text-gray-500">Calibrated Score</p>
+          </div>
+          <div className="px-4 py-2 bg-blue-600 rounded-lg text-white font-semibold text-sm">
+            Qualified
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-medium text-gray-300">Technical Collaborator</p>
+            <p className="text-xs text-gray-500">Profile Type</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="space-y-2">
+        <p className="text-sm text-gray-500">
+          Works with ChatGPT, Claude, and Gemini. Your data stays private.
+        </p>
+        <p className="text-xs text-gray-600">
+          Built by <a href="https://human-machines.com" className="text-[#7877df] hover:underline">Human Machines</a> using
+          the Collaboration Results Index (Corrix) framework.
+        </p>
+      </div>
     </div>
   );
 }
@@ -223,7 +300,7 @@ function SubmitSection({
             className="w-full bg-gray-800 border border-gray-700 rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7877df]"
           />
           <p className="text-gray-500 text-sm mt-1">
-            We'll send you a copy of your credential
+            We'll send you a copy of your credential. We won't share your email or send marketing messages.
           </p>
         </div>
 
