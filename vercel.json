@@ -3,7 +3,7 @@
   "buildCommand": "npm run build --workspace=@corrix/shared && npm run build --workspace=@corrix/dashboard",
   "outputDirectory": "packages/dashboard/dist",
   "framework": "vite",
-  "installCommand": "npm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],

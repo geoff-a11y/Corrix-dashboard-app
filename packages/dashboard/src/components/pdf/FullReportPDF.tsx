@@ -1,5 +1,8 @@
 import { Document, Page, View, Text } from '@react-pdf/renderer';
-import './pdf-fonts';
+import { registerFonts } from './pdf-fonts';
+
+// Register fonts when this module is loaded
+registerFonts();
 import { styles, colors, getRatingColor } from './pdf-styles';
 import { PDFHeader } from './PDFHeader';
 import { PDFFooter } from './PDFFooter';

@@ -6,6 +6,9 @@ import { DateRangeProvider } from '@/contexts/DateRangeContext';
 import { Layout } from '@/components/Layout';
 import { LoginPage } from '@/pages/LoginPage';
 import { VerifyPage } from '@/pages/VerifyPage';
+import BaselinePage from '@/pages/BaselinePage';
+import CredentialPage from '@/pages/CredentialPage';
+import CredentialVerifyPage from '@/pages/CredentialVerifyPage';
 import { HomePage } from '@/pages/HomePage';
 import { PerformancePage } from '@/pages/PerformancePage';
 import { BehaviorsPage } from '@/pages/BehaviorsPage';
@@ -19,6 +22,9 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/verify" element={<VerifyPage />} />
+        <Route path="/baseline" element={<BaselinePage />} />
+        <Route path="/credential" element={<CredentialPage />} />
+        <Route path="/verify/:credentialId" element={<CredentialVerifyPage />} />
         <Route
           path="/"
           element={

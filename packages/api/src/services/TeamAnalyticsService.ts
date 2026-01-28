@@ -12,6 +12,7 @@ interface RankingParams {
   organizationId: string;
   sortBy: string;
   limit: number;
+  teamIds?: string[]; // Optional filter for team_admin users
 }
 
 interface TeamParams {
@@ -98,7 +99,14 @@ export class TeamAnalyticsService {
   }
 
   async getTeamRanking(params: RankingParams): Promise<TeamRankingEntry[]> {
-    const { organizationId, limit } = params;
+    const { organizationId, limit, teamIds } = params;
+
+    // Build query with optional teamIds filter
+    const teamFilter = teamIds && teamIds.length > 0 ? 'AND t.id = ANY($3)' : '';
+    const queryParams: (string | number | string[])[] = [organizationId, limit];
+    if (teamIds && teamIds.length > 0) {
+      queryParams.push(teamIds);
+    }
 
     const query = `
       WITH team_scores AS (
@@ -112,7 +120,7 @@ export class TeamAnalyticsService {
         FROM teams t
         JOIN users u ON u.team_id = t.id
         LEFT JOIN daily_scores ds ON ds.user_id = u.id
-        WHERE u.organization_id = $1
+        WHERE u.organization_id = $1 ${teamFilter}
         GROUP BY t.id, t.name
       )
       SELECT
@@ -130,7 +138,7 @@ export class TeamAnalyticsService {
       LIMIT $2
     `;
 
-    const result = await db.query(query, [organizationId, limit]);
+    const result = await db.query(query, queryParams);
 
     return result.rows.map(row => ({
       teamId: row.team_id,

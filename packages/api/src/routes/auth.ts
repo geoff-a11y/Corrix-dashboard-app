@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import db from '../db/connection.js';
 
 const router = Router();
@@ -172,7 +173,7 @@ router.post('/magic-link/verify', async (req, res) => {
   }
 });
 
-// Legacy password login - kept for backwards compatibility
+// Password login - supports both admin and team_admin roles
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -183,75 +184,83 @@ router.post('/login', async (req, res) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Check admin_accounts table first
+    // Check admin_accounts table
     const accountResult = await db.query(
-      'SELECT id, email, name, role, organization_id, team_ids, is_active FROM admin_accounts WHERE email = $1',
+      'SELECT id, email, name, role, organization_id, team_ids, is_active, password_hash FROM admin_accounts WHERE email = $1',
       [normalizedEmail]
     );
 
-    // Check password - demo user has special password, others use admin password
-    const isValidPassword =
-      (normalizedEmail === DEMO_EMAIL && password === DEMO_PASSWORD) ||
-      password === ADMIN_PASSWORD;
-
-    if (accountResult.rows.length > 0 && isValidPassword) {
-      const account = accountResult.rows[0];
-
-      if (!account.is_active) {
-        return res.status(401).json({ message: 'Account is disabled' });
-      }
-
-      // Only allow password login for full admins
-      if (account.role !== 'admin') {
-        return res.status(401).json({ message: 'Please use magic link login' });
-      }
-
-      // Update last login
-      await db.query(
-        'UPDATE admin_accounts SET last_login_at = NOW() WHERE id = $1',
-        [account.id]
-      );
-
-      // Get organization name
-      let orgName = 'Corrix';
-      if (account.organization_id) {
-        const orgResult = await db.query(
-          'SELECT name FROM organizations WHERE id = $1',
-          [account.organization_id]
-        );
-        if (orgResult.rows[0]?.name) {
-          orgName = orgResult.rows[0].name;
-        }
-      }
-
-      const token = jwt.sign(
-        {
-          userId: account.id,
-          email: account.email,
-          organizationId: account.organization_id,
-          role: account.role,
-          teamIds: account.team_ids || [],
-        },
-        JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-
-      return res.json({
-        token,
-        user: {
-          id: account.id,
-          email: account.email,
-          name: account.name,
-          organizationId: account.organization_id,
-          organizationName: orgName,
-          role: account.role,
-          teamIds: account.team_ids || [],
-        },
-      });
+    if (accountResult.rows.length === 0) {
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Reject all other logins
-    return res.status(401).json({ message: 'Invalid credentials or not authorized' });
+    const account = accountResult.rows[0];
+
+    if (!account.is_active) {
+      return res.status(401).json({ message: 'Account is disabled' });
+    }
+
+    // Validate password
+    let isValidPassword = false;
+
+    // Check account-specific password hash first (for team_admin users)
+    if (account.password_hash) {
+      isValidPassword = await bcrypt.compare(password, account.password_hash);
+    }
+
+    // Fallback: admin users can use the shared admin password or demo password
+    if (!isValidPassword && account.role === 'admin') {
+      isValidPassword =
+        (normalizedEmail === DEMO_EMAIL && password === DEMO_PASSWORD) ||
+        password === ADMIN_PASSWORD;
+    }
+
+    if (!isValidPassword) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Update last login
+    await db.query(
+      'UPDATE admin_accounts SET last_login_at = NOW() WHERE id = $1',
+      [account.id]
+    );
+
+    // Get organization name
+    let orgName = 'Corrix';
+    if (account.organization_id) {
+      const orgResult = await db.query(
+        'SELECT name FROM organizations WHERE id = $1',
+        [account.organization_id]
+      );
+      if (orgResult.rows[0]?.name) {
+        orgName = orgResult.rows[0].name;
+      }
+    }
+
+    const token = jwt.sign(
+      {
+        userId: account.id,
+        email: account.email,
+        organizationId: account.organization_id,
+        role: account.role,
+        teamIds: account.team_ids || [],
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return res.json({
+      token,
+      user: {
+        id: account.id,
+        email: account.email,
+        name: account.name,
+        organizationId: account.organization_id,
+        organizationName: orgName,
+        role: account.role,
+        teamIds: account.team_ids || [],
+      },
+    });
   } catch (error) {
     console.error('[Auth] Login error:', error);
     res.status(500).json({ message: 'Internal server error' });

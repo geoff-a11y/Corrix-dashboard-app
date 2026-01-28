@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { TeamAnalyticsService } from '../services/TeamAnalyticsService.js';
 import { cacheRankings, cacheLists } from '../middleware/cache.js';
+import { AuthenticatedRequest } from '../middleware/auth.js';
 import db from '../db/connection.js';
 
 const router = Router();
@@ -9,11 +10,26 @@ const teamService = new TeamAnalyticsService();
 /**
  * GET /api/teams/list
  * Returns list of teams for dropdown selection
+ * For team_admin users, only returns their assigned teams
  */
-router.get('/list', cacheLists, async (req, res) => {
+router.get('/list', cacheLists, async (req: AuthenticatedRequest, res) => {
   try {
     const { organizationId } = req.query;
+    const user = req.user;
 
+    // For team_admin, filter to only their assigned teams
+    if (user?.role === 'team_admin' && user.teamIds && user.teamIds.length > 0) {
+      const result = await db.query(
+        `SELECT id, name
+         FROM teams
+         WHERE organization_id = $1 AND id = ANY($2)
+         ORDER BY name`,
+        [organizationId, user.teamIds]
+      );
+      return res.json(result.rows);
+    }
+
+    // For admin, return all teams
     const result = await db.query(
       `SELECT id, name
        FROM teams
@@ -33,14 +49,26 @@ router.get('/list', cacheLists, async (req, res) => {
  * GET /api/v1/teams/comparison
  * Capability #34: Team Comparison Dashboard
  */
-router.get('/comparison', cacheRankings, async (req, res) => {
+router.get('/comparison', cacheRankings, async (req: AuthenticatedRequest, res) => {
   try {
     const { organizationId, teamIds, startDate, endDate } = req.query;
+    const user = req.user;
 
     // Parse teamIds if provided as comma-separated string
-    const teamIdList = teamIds
+    let teamIdList = teamIds
       ? (teamIds as string).split(',')
       : undefined;
+
+    // For team_admin, restrict to their assigned teams
+    if (user?.role === 'team_admin' && user.teamIds && user.teamIds.length > 0) {
+      if (teamIdList) {
+        // Filter requested teams to only allowed ones
+        teamIdList = teamIdList.filter(id => user.teamIds!.includes(id));
+      } else {
+        // Default to their assigned teams
+        teamIdList = user.teamIds;
+      }
+    }
 
     const comparison = await teamService.getTeamComparison({
       organizationId: organizationId as string,
@@ -60,14 +88,21 @@ router.get('/comparison', cacheRankings, async (req, res) => {
  * GET /api/v1/teams/ranking
  * Returns teams ranked by Corrix score
  */
-router.get('/ranking', cacheRankings, async (req, res) => {
+router.get('/ranking', cacheRankings, async (req: AuthenticatedRequest, res) => {
   try {
     const { organizationId, sortBy, limit } = req.query;
+    const user = req.user;
+
+    // For team_admin, restrict to their assigned teams
+    const teamIds = (user?.role === 'team_admin' && user.teamIds && user.teamIds.length > 0)
+      ? user.teamIds
+      : undefined;
 
     const ranking = await teamService.getTeamRanking({
       organizationId: organizationId as string,
       sortBy: (sortBy as string) || 'corrixScore',
       limit: parseInt(limit as string) || 10,
+      teamIds, // Pass teamIds filter
     });
 
     res.json(ranking);

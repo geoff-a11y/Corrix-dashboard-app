@@ -22,8 +22,8 @@ export function ProtectedRoute({ children, requireAdmin = true }: ProtectedRoute
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Admin-only access check
-  if (requireAdmin && user?.role !== 'admin') {
+  // Admin/team_admin access check
+  if (requireAdmin && user?.role !== 'admin' && user?.role !== 'team_admin') {
     return (
       <div className="min-h-screen bg-bg-tertiary flex items-center justify-center">
         <div className="max-w-md text-center p-8">
