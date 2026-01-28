@@ -123,8 +123,17 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`[Corrix API] Server running on port ${PORT}`);
+
+  // Run alpha user sync on startup to ensure Corrix Beta org/team exists
+  try {
+    console.log('[Corrix API] Running startup sync job...');
+    await runAlphaUserSyncJob();
+    console.log('[Corrix API] Startup sync completed');
+  } catch (error) {
+    console.error('[Corrix API] Startup sync failed:', error);
+  }
 });
 
 // Graceful shutdown

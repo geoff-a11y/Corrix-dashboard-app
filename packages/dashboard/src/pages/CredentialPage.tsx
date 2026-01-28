@@ -339,10 +339,12 @@ function PDFDownloadButton({
   const [PDFComponent, setPDFComponent] = useState<React.ComponentType<{ credential: Credential }> | null>(null);
   const [PDFLink, setPDFLink] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadPDFComponents() {
       try {
+        setError(null);
         const pdfRenderer = await import('@react-pdf/renderer');
         setPDFLink(() => pdfRenderer.PDFDownloadLink);
 
@@ -353,8 +355,9 @@ function PDFDownloadButton({
           const mod = await import('@/components/pdf/SummaryPDF');
           setPDFComponent(() => mod.SummaryPDF);
         }
-      } catch (error) {
-        console.error('Failed to load PDF components:', error);
+      } catch (err) {
+        console.error('Failed to load PDF components:', err);
+        setError('Failed to load PDF');
       } finally {
         setLoading(false);
       }
@@ -366,13 +369,24 @@ function PDFDownloadButton({
     ? `Corrix-Credential-${credential.credential_id}.pdf`
     : `Corrix-Summary-${credential.credential_id}.pdf`;
 
-  if (loading || !PDFComponent || !PDFLink) {
+  if (loading) {
     return (
       <button
         disabled
         className="py-3 px-4 bg-gray-700 text-gray-400 rounded-lg font-medium cursor-wait text-center block w-full"
       >
         Loading PDF...
+      </button>
+    );
+  }
+
+  if (error || !PDFComponent || !PDFLink) {
+    return (
+      <button
+        disabled
+        className="py-3 px-4 bg-red-900/50 text-red-400 rounded-lg font-medium text-center block w-full"
+      >
+        PDF unavailable
       </button>
     );
   }
@@ -384,16 +398,299 @@ function PDFDownloadButton({
     <PDFDownloadLink
       document={<DocumentComponent credential={credential} />}
       fileName={fileName}
-      className="py-3 px-4 bg-[#7877df] hover:bg-[#6665c9] text-white rounded-lg font-medium transition-colors text-center block"
+      style={{
+        display: 'block',
+        padding: '12px 16px',
+        backgroundColor: '#7877df',
+        color: 'white',
+        borderRadius: '8px',
+        fontWeight: 500,
+        textAlign: 'center',
+        textDecoration: 'none',
+        cursor: 'pointer',
+      }}
     >
-      {({ loading: pdfLoading }: { loading: boolean }) =>
-        pdfLoading
+      {({ loading: pdfLoading, error: pdfError }: { loading: boolean; error: Error | null }) => {
+        if (pdfError) {
+          console.error('PDF generation error:', pdfError);
+          return 'Error generating PDF';
+        }
+        return pdfLoading
           ? 'Preparing PDF...'
           : type === 'full'
-            ? 'Download Full Report'
-            : 'Download Summary'
-      }
+            ? 'Download your full report'
+            : 'Download shareable summary';
+      }}
     </PDFDownloadLink>
+  );
+}
+
+// Additional score helpers for credential detail
+function getScoreBgColor(score: number): string {
+  if (score >= 80) return 'bg-green-500';
+  if (score >= 60) return 'bg-yellow-500';
+  return 'bg-red-500';
+}
+
+function getScoreBenchmark(score: number): { label: string; description: string; color: string } {
+  if (score >= 85) return { label: 'Exceptional', description: 'Top 10%', color: 'text-green-400' };
+  if (score >= 75) return { label: 'Strong', description: 'Top 25%', color: 'text-blue-400' };
+  if (score >= 65) return { label: 'Proficient', description: 'Above average', color: 'text-[#7877df]' };
+  if (score >= 50) return { label: 'Developing', description: 'Room for growth', color: 'text-yellow-400' };
+  return { label: 'Emerging', description: 'Early stage', color: 'text-red-400' };
+}
+
+// Score Bar
+function ScoreBar({ label, score, description }: { label: string; score: number; description?: string }) {
+  return (
+    <div className="mb-3">
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-sm text-gray-300">{label}</span>
+        <span className={clsx('text-sm font-semibold', getScoreColor(score))}>{score}</span>
+      </div>
+      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+        <div className={clsx('h-full rounded-full', getScoreBgColor(score))} style={{ width: `${score}%` }} />
+      </div>
+      {description && <p className="text-xs text-gray-500 mt-1">{description}</p>}
+    </div>
+  );
+}
+
+// Mode Bar
+function ModeBar({ label, percentage, isPrimary }: { label: string; percentage: number; isPrimary: boolean }) {
+  return (
+    <div className="mb-2">
+      <div className="flex justify-between items-center mb-1">
+        <span className={clsx('text-sm', isPrimary ? 'text-[#7877df] font-semibold' : 'text-gray-400')}>
+          {label} {isPrimary && '(Primary)'}
+        </span>
+        <span className="text-sm text-gray-400">{percentage}%</span>
+      </div>
+      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+        <div className={clsx('h-full rounded-full', isPrimary ? 'bg-[#7877df]' : 'bg-gray-500')} style={{ width: `${percentage}%` }} />
+      </div>
+    </div>
+  );
+}
+
+// Metric explanations
+const metricExplanations = {
+  decision_quality: 'How well you evaluate AI suggestions before acting',
+  output_accuracy: 'Quality of work produced with AI assistance',
+  efficiency: 'Time optimization when working with AI',
+  appropriateness_of_reliance: 'Relying on AI for appropriate tasks',
+  trust_calibration: 'How well your trust matches AI capabilities',
+  dialogue_quality: 'Effectiveness of your prompts and interactions',
+  cognitive_sustainability: 'Maintaining critical thinking with AI',
+  skill_trajectory: 'Whether your skills are growing with AI use',
+  expertise_preservation: 'Retaining domain expertise alongside AI',
+};
+
+// Mode descriptions
+const modeDescriptions: Record<string, string> = {
+  approving: 'You select from AI-generated options',
+  consulting: 'You seek AI input while making own decisions',
+  supervising: 'AI drafts, you refine and improve',
+  delegating: 'AI works autonomously on tasks',
+};
+
+// Expertise labels
+const expertiseLabels: Record<string, { label: string; color: string }> = {
+  novice: { label: 'Novice', color: 'bg-gray-500' },
+  advanced_beginner: { label: 'Advanced Beginner', color: 'bg-blue-500' },
+  competent: { label: 'Competent', color: 'bg-yellow-500' },
+  proficient: { label: 'Proficient', color: 'bg-green-500' },
+  expert: { label: 'Expert', color: 'bg-purple-500' },
+};
+
+// Full Credential Detail View
+function CredentialDetailView({ credential }: { credential: Credential }) {
+  const primaryMode = credential.mode_primary?.toLowerCase() || 'consulting';
+  const estimatedPercentile = credential.percentile || Math.min(99, Math.max(1, Math.round(credential.calibrated_overall_score * 0.9)));
+
+  return (
+    <div className="space-y-6 mt-8 pt-8 border-t border-gray-700">
+      <h2 className="text-2xl font-bold text-white text-center">Your Full Assessment</h2>
+
+      {/* Overall Score with Percentile Bar */}
+      <div className="bg-gray-800 rounded-xl p-6">
+        <div className="text-center mb-6">
+          <p className={clsx('text-5xl font-bold', getScoreColor(credential.calibrated_overall_score))}>{credential.calibrated_overall_score}</p>
+          <p className="text-gray-400 mt-1">Overall Calibrated Score</p>
+        </div>
+
+        {/* Percentile Visualization */}
+        <div className="bg-gray-700/50 rounded-lg p-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-gray-400">Percentile Ranking</span>
+            <span className={clsx('text-sm font-semibold', getScoreBenchmark(credential.calibrated_overall_score).color)}>
+              {getScoreBenchmark(credential.calibrated_overall_score).label}
+            </span>
+          </div>
+          <div className="relative h-4 bg-gray-600 rounded-full overflow-hidden mb-2">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-yellow-500 via-blue-500 to-green-500 opacity-30" />
+            <div className="absolute h-full bg-[#7877df] rounded-full" style={{ width: `${estimatedPercentile}%` }} />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg border-2 border-[#7877df]"
+              style={{ left: `calc(${estimatedPercentile}% - 8px)` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>0%</span>
+            <span className="text-[#7877df] font-medium">You scored higher than {estimatedPercentile}% of professionals</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        {/* Score Interpretation */}
+        <div className="mt-4 grid grid-cols-5 gap-1 text-center text-xs">
+          <div className={clsx('py-2 rounded', credential.calibrated_overall_score < 50 ? 'bg-red-500/30 text-red-400' : 'bg-gray-700/50 text-gray-500')}>
+            <div>0-49</div><div>Emerging</div>
+          </div>
+          <div className={clsx('py-2 rounded', credential.calibrated_overall_score >= 50 && credential.calibrated_overall_score < 65 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-gray-700/50 text-gray-500')}>
+            <div>50-64</div><div>Developing</div>
+          </div>
+          <div className={clsx('py-2 rounded', credential.calibrated_overall_score >= 65 && credential.calibrated_overall_score < 75 ? 'bg-[#7877df]/30 text-[#7877df]' : 'bg-gray-700/50 text-gray-500')}>
+            <div>65-74</div><div>Proficient</div>
+          </div>
+          <div className={clsx('py-2 rounded', credential.calibrated_overall_score >= 75 && credential.calibrated_overall_score < 85 ? 'bg-blue-500/30 text-blue-400' : 'bg-gray-700/50 text-gray-500')}>
+            <div>75-84</div><div>Strong</div>
+          </div>
+          <div className={clsx('py-2 rounded', credential.calibrated_overall_score >= 85 ? 'bg-green-500/30 text-green-400' : 'bg-gray-700/50 text-gray-500')}>
+            <div>85+</div><div>Exceptional</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Three Rs Overview with Weights */}
+      <div className="bg-gray-800 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">The Three Rs Framework</h3>
+        <p className="text-sm text-gray-400 mb-4">Your overall score is weighted: Results (30%) + Relationship (40%) + Resilience (30%)</p>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-gray-700/50 rounded-lg p-4 text-center">
+            <p className={clsx('text-3xl font-bold', getScoreColor(credential.results_overall))}>{credential.results_overall}</p>
+            <p className="text-sm text-gray-400 mt-1">Results</p>
+            <p className={clsx('text-xs font-medium', getScoreBenchmark(credential.results_overall).color)}>{getScoreBenchmark(credential.results_overall).label}</p>
+            <p className="text-xs text-gray-500 mt-1">30% weight</p>
+          </div>
+          <div className="bg-gray-700/50 rounded-lg p-4 text-center border-2 border-[#7877df]/30">
+            <p className={clsx('text-3xl font-bold', getScoreColor(credential.relationship_overall))}>{credential.relationship_overall}</p>
+            <p className="text-sm text-gray-400 mt-1">Relationship</p>
+            <p className={clsx('text-xs font-medium', getScoreBenchmark(credential.relationship_overall).color)}>{getScoreBenchmark(credential.relationship_overall).label}</p>
+            <p className="text-xs text-[#7877df] mt-1">40% weight (primary)</p>
+          </div>
+          <div className="bg-gray-700/50 rounded-lg p-4 text-center">
+            <p className={clsx('text-3xl font-bold', getScoreColor(credential.resilience_overall))}>{credential.resilience_overall}</p>
+            <p className="text-sm text-gray-400 mt-1">Resilience</p>
+            <p className={clsx('text-xs font-medium', getScoreBenchmark(credential.resilience_overall).color)}>{getScoreBenchmark(credential.resilience_overall).label}</p>
+            <p className="text-xs text-gray-500 mt-1">30% weight</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Description */}
+      {credential.profile_description && (
+        <div className="bg-gray-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-2">Your Profile: {credential.profile_type}</h3>
+          <p className="text-gray-300">{credential.profile_description}</p>
+        </div>
+      )}
+
+      {/* Detailed Three Rs Breakdown */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Results */}
+        <div className="bg-gray-800 rounded-xl p-6">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-lg font-semibold text-white">Results</h3>
+            <span className={clsx('text-2xl font-bold', getScoreColor(credential.results_overall))}>{credential.results_overall}</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-1">Are you getting better outcomes?</p>
+          <p className={clsx('text-xs mb-4', getScoreBenchmark(credential.results_overall).color)}>
+            {getScoreBenchmark(credential.results_overall).label} — {getScoreBenchmark(credential.results_overall).description}
+          </p>
+          <ScoreBar label="Decision Quality" score={credential.results_decision_quality} description={metricExplanations.decision_quality} />
+          <ScoreBar label="Output Accuracy" score={credential.results_output_accuracy} description={metricExplanations.output_accuracy} />
+          <ScoreBar label="Efficiency" score={credential.results_efficiency} description={metricExplanations.efficiency} />
+        </div>
+
+        {/* Relationship */}
+        <div className="bg-gray-800 rounded-xl p-6">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-lg font-semibold text-white">Relationship</h3>
+            <span className={clsx('text-2xl font-bold', getScoreColor(credential.relationship_overall))}>{credential.relationship_overall}</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-1">Is your collaboration healthy?</p>
+          <p className={clsx('text-xs mb-4', getScoreBenchmark(credential.relationship_overall).color)}>
+            {getScoreBenchmark(credential.relationship_overall).label} — {getScoreBenchmark(credential.relationship_overall).description}
+          </p>
+          <ScoreBar label="Reliance Balance" score={credential.relationship_appropriateness_of_reliance} description={metricExplanations.appropriateness_of_reliance} />
+          <ScoreBar label="Trust Calibration" score={credential.relationship_trust_calibration} description={metricExplanations.trust_calibration} />
+          <ScoreBar label="Dialogue Quality" score={credential.relationship_dialogue_quality} description={metricExplanations.dialogue_quality} />
+        </div>
+
+        {/* Resilience */}
+        <div className="bg-gray-800 rounded-xl p-6">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-lg font-semibold text-white">Resilience</h3>
+            <span className={clsx('text-2xl font-bold', getScoreColor(credential.resilience_overall))}>{credential.resilience_overall}</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-1">Are you staying sharp?</p>
+          <p className={clsx('text-xs mb-4', getScoreBenchmark(credential.resilience_overall).color)}>
+            {getScoreBenchmark(credential.resilience_overall).label} — {getScoreBenchmark(credential.resilience_overall).description}
+          </p>
+          <ScoreBar label="Cognitive Sustainability" score={credential.resilience_cognitive_sustainability} description={metricExplanations.cognitive_sustainability} />
+          <ScoreBar label="Skill Trajectory" score={credential.resilience_skill_trajectory} description={metricExplanations.skill_trajectory} />
+          <ScoreBar label="Expertise Preservation" score={credential.resilience_expertise_preservation} description={metricExplanations.expertise_preservation} />
+        </div>
+      </div>
+
+      {/* Collaboration Mode */}
+      <div className="bg-gray-800 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-1">Collaboration Mode</h3>
+        <p className="text-sm text-gray-400 mb-4">{modeDescriptions[primaryMode] || 'How you work with AI'}</p>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <ModeBar label="Approving" percentage={credential.mode_approving_pct} isPrimary={primaryMode === 'approving'} />
+            <ModeBar label="Consulting" percentage={credential.mode_consulting_pct} isPrimary={primaryMode === 'consulting'} />
+            <ModeBar label="Supervising" percentage={credential.mode_supervising_pct} isPrimary={primaryMode === 'supervising'} />
+            <ModeBar label="Delegating" percentage={credential.mode_delegating_pct} isPrimary={primaryMode === 'delegating'} />
+          </div>
+          <div className="bg-gray-700/30 rounded-lg p-4 text-xs text-gray-400 space-y-1">
+            <p><span className="text-gray-300 font-medium">Approving:</span> Selecting from AI options</p>
+            <p><span className="text-gray-300 font-medium">Consulting:</span> AI advises, you decide</p>
+            <p><span className="text-gray-300 font-medium">Supervising:</span> AI drafts, you refine</p>
+            <p><span className="text-gray-300 font-medium">Delegating:</span> AI works autonomously</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Domain Expertise */}
+      {credential.domains && credential.domains.length > 0 && (
+        <div className="bg-gray-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Domain Expertise</h3>
+          <div className="grid md:grid-cols-3 gap-4">
+            {credential.domains.map((domain, index) => {
+              const expertise = expertiseLabels[domain.domain_expertise] || expertiseLabels.competent;
+              return (
+                <div key={index} className="bg-gray-700/30 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="text-sm font-semibold text-white">{domain.domain_name}</h4>
+                    <span className={clsx('text-xs px-2 py-0.5 rounded text-white', expertise.color)}>{expertise.label}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-2">{domain.domain_pct}% of AI usage</p>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between"><span className="text-gray-400">Results</span><span className={getScoreColor(domain.domain_results)}>{domain.domain_results}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-400">Relationship</span><span className={getScoreColor(domain.domain_relationship)}>{domain.domain_relationship}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-400">Resilience</span><span className={getScoreColor(domain.domain_resilience)}>{domain.domain_resilience}</span></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+    </div>
   );
 }
 
@@ -563,6 +860,9 @@ function ResultSection({
           </li>
         </ul>
       </div>
+
+      {/* Full Credential Detail */}
+      {fullCredential && <CredentialDetailView credential={fullCredential} />}
 
       {/* Reset */}
       <div className="text-center pt-4">

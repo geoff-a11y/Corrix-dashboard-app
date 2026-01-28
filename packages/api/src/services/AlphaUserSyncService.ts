@@ -123,13 +123,13 @@ async function syncUser(alphaUser: AlphaUser): Promise<boolean> {
 export async function runAlphaUserSync(): Promise<{ synced: number; errors: number }> {
   console.log('[AlphaUserSync] Starting sync...');
 
+  // Always ensure org/team exist (even without Supabase)
+  await ensureAlphaOrganization();
+
   if (!isSupabaseConfigured()) {
-    console.warn('[AlphaUserSync] Supabase not configured, skipping sync');
+    console.warn('[AlphaUserSync] Supabase not configured, skipping user sync');
     return { synced: 0, errors: 0 };
   }
-
-  // Ensure org/team exist
-  await ensureAlphaOrganization();
 
   // Fetch and sync users
   const alphaUsers = await fetchAlphaUsers();
