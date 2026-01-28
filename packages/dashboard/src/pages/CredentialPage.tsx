@@ -1,20 +1,9 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { clsx } from 'clsx';
 import { CREDENTIAL_PROMPT } from '@/lib/credential-prompt';
 import { generateCredential, getCredential } from '@/api/credential';
 import type { CredentialGenerateResponse, QualificationRating, Credential } from '@/types/credential';
 import { getRatingColor, getRatingLabel, getRatingDescription } from '@/types/credential';
-
-// Lazy load PDF components to avoid crashing on initial page load
-const PDFDownloadLink = lazy(() =>
-  import('@react-pdf/renderer').then(mod => ({ default: mod.PDFDownloadLink }))
-);
-const FullReportPDF = lazy(() =>
-  import('@/components/pdf/FullReportPDF').then(mod => ({ default: mod.FullReportPDF }))
-);
-const SummaryPDF = lazy(() =>
-  import('@/components/pdf/SummaryPDF').then(mod => ({ default: mod.SummaryPDF }))
-);
 
 // Score color helper
 function getScoreColor(score: number): string {
@@ -280,7 +269,7 @@ function RatingBadge({ rating, size = 'lg' }: { rating: QualificationRating; siz
   );
 }
 
-// PDF Download Button Component
+// PDF Download Button Component - uses dynamic import to avoid loading PDF library until needed
 function PDFDownloadButton({
   credential,
   type,
@@ -288,45 +277,64 @@ function PDFDownloadButton({
   credential: Credential;
   type: 'full' | 'summary';
 }) {
+  const [PDFComponent, setPDFComponent] = useState<React.ComponentType<{ credential: Credential }> | null>(null);
+  const [PDFLink, setPDFLink] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadPDFComponents() {
+      try {
+        const pdfRenderer = await import('@react-pdf/renderer');
+        setPDFLink(() => pdfRenderer.PDFDownloadLink);
+
+        if (type === 'full') {
+          const mod = await import('@/components/pdf/FullReportPDF');
+          setPDFComponent(() => mod.FullReportPDF);
+        } else {
+          const mod = await import('@/components/pdf/SummaryPDF');
+          setPDFComponent(() => mod.SummaryPDF);
+        }
+      } catch (error) {
+        console.error('Failed to load PDF components:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPDFComponents();
+  }, [type]);
+
   const fileName = type === 'full'
     ? `Corrix-Credential-${credential.credential_id}.pdf`
     : `Corrix-Summary-${credential.credential_id}.pdf`;
 
-  return (
-    <Suspense
-      fallback={
-        <button
-          disabled
-          className="py-3 px-4 bg-gray-700 text-gray-400 rounded-lg font-medium cursor-wait text-center block w-full"
-        >
-          Loading PDF...
-        </button>
-      }
-    >
-      <PDFDownloadLink
-        document={
-          type === 'full' ? (
-            <Suspense fallback={null}>
-              <FullReportPDF credential={credential} />
-            </Suspense>
-          ) : (
-            <Suspense fallback={null}>
-              <SummaryPDF credential={credential} />
-            </Suspense>
-          )
-        }
-        fileName={fileName}
-        className="py-3 px-4 bg-[#7877df] hover:bg-[#6665c9] text-white rounded-lg font-medium transition-colors text-center block"
+  if (loading || !PDFComponent || !PDFLink) {
+    return (
+      <button
+        disabled
+        className="py-3 px-4 bg-gray-700 text-gray-400 rounded-lg font-medium cursor-wait text-center block w-full"
       >
-        {({ loading }) =>
-          loading
-            ? 'Preparing PDF...'
-            : type === 'full'
-              ? 'Download Full Report'
-              : 'Download Summary'
-        }
-      </PDFDownloadLink>
-    </Suspense>
+        Loading PDF...
+      </button>
+    );
+  }
+
+  const PDFDownloadLink = PDFLink;
+  const DocumentComponent = PDFComponent;
+
+  return (
+    <PDFDownloadLink
+      document={<DocumentComponent credential={credential} />}
+      fileName={fileName}
+      className="py-3 px-4 bg-[#7877df] hover:bg-[#6665c9] text-white rounded-lg font-medium transition-colors text-center block"
+    >
+      {({ loading: pdfLoading }: { loading: boolean }) =>
+        pdfLoading
+          ? 'Preparing PDF...'
+          : type === 'full'
+            ? 'Download Full Report'
+            : 'Download Summary'
+      }
+    </PDFDownloadLink>
   );
 }
 
