@@ -21,6 +21,10 @@ import targetingRouter from './routes/targeting.js';
 // Dashboard redesign routes
 import alertsRouter from './routes/alerts.js';
 import performanceRouter from './routes/performance.js';
+// Baseline assessment (public)
+import baselineRouter from './routes/baseline.js';
+// Credential system (public)
+import credentialRouter from './routes/credential.js';
 import { requireAuth, enforceOrgScope, requireAdmin } from './middleware/auth.js';
 import { getRedisClient, isRedisAvailable, closeRedis } from './cache/connection.js';
 import { runAlphaUserSyncJob, getAlphaUserSyncJobStatus } from './jobs/AlphaUserSyncJob.js';
@@ -32,6 +36,7 @@ getRedisClient();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const BUILD_VERSION = '2026-01-28-v2'; // Force redeploy
 
 // Middleware
 app.use(helmet());
@@ -58,6 +63,12 @@ app.get('/health', async (_req, res) => {
 
 // Auth routes (public)
 app.use('/api/auth', authRouter);
+
+// Baseline assessment (public - no auth required for submit)
+app.use('/api/baseline', baselineRouter);
+
+// Credential system (public - no auth required)
+app.use('/api/credential', credentialRouter);
 
 // API routes (protected)
 app.use('/api/scores', requireAuth, enforceOrgScope, scoresRouter);
