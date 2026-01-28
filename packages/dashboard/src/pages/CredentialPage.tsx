@@ -611,10 +611,7 @@ export default function CredentialPage() {
       <header className="bg-gray-900 border-b border-gray-800">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <a href="https://corrix.ai" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#7877df] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">Cx</span>
-            </div>
-            <span className="font-semibold text-white">Corrix</span>
+            <img src="/images/logo.png" alt="Corrix" className="h-8" />
           </a>
         </div>
       </header>
