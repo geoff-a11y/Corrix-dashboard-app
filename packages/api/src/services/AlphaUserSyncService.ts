@@ -1,12 +1,12 @@
 import db from '../db/connection.js';
 import { getSupabaseClient, isSupabaseConfigured } from '../cloud/supabase.js';
 
-// Fixed UUIDs for Alpha Testers org/team (deterministic for idempotent seeding)
+// Fixed UUIDs for Corrix Beta org/team (deterministic for idempotent seeding)
 // Using distinct UUIDs to avoid conflict with demo data
 const ALPHA_ORG_ID = 'a1fa0000-0000-0000-0000-000000000001';
 const ALPHA_TEAM_ID = 'a1fa0000-0000-0000-0000-000000000002';
-const ALPHA_ORG_NAME = 'Alpha Testers';
-const ALPHA_TEAM_NAME = 'Alpha Users';
+const ALPHA_ORG_NAME = 'Corrix Beta';
+const ALPHA_TEAM_NAME = 'Beta Testers';
 
 interface AlphaUser {
   id: string;
@@ -26,26 +26,26 @@ interface AlphaUser {
 }
 
 /**
- * Ensure the Alpha Testers organization and team exist
+ * Ensure the Corrix Beta organization and team exist
  */
 export async function ensureAlphaOrganization(): Promise<void> {
-  // Create organization if not exists
+  // Create or update organization
   await db.query(
     `INSERT INTO organizations (id, name, domain, settings)
-     VALUES ($1, $2, 'alpha.corrix.io', '{"isAlphaOrg": true}')
-     ON CONFLICT (id) DO NOTHING`,
+     VALUES ($1, $2, 'beta.corrix.io', '{"isBetaOrg": true}')
+     ON CONFLICT (id) DO UPDATE SET name = $2`,
     [ALPHA_ORG_ID, ALPHA_ORG_NAME]
   );
 
-  // Create team if not exists
+  // Create or update team
   await db.query(
     `INSERT INTO teams (id, organization_id, name, settings)
-     VALUES ($1, $2, $3, '{"isAlphaTeam": true}')
-     ON CONFLICT (id) DO NOTHING`,
+     VALUES ($1, $2, $3, '{"isBetaTeam": true}')
+     ON CONFLICT (id) DO UPDATE SET name = $3`,
     [ALPHA_TEAM_ID, ALPHA_ORG_ID, ALPHA_TEAM_NAME]
   );
 
-  console.log('[AlphaUserSync] Alpha Testers org/team ensured');
+  console.log('[AlphaUserSync] Corrix Beta org/team ensured');
 }
 
 /**
