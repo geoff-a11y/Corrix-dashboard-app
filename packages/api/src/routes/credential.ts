@@ -313,11 +313,11 @@ router.post('/generate', async (req: Request, res: Response) => {
         decoded.usage.peak_time,
         decoded.usage.weekly_hours_estimate,
         decoded.usage.weekly_interactions_estimate,
-        Math.round(decoded.usage.critical_engagement_rate * 100), // Convert decimal to percentage
+        decoded.usage.critical_engagement_rate,
         decoded.usage.learning_trajectory,
         decoded.usage.vocabulary_growth,
         decoded.usage.topic_breadth,
-        Math.round(decoded.usage.knowledge_transfer * 100), // Convert decimal to percentage
+        decoded.usage.knowledge_transfer,
         decoded.observations.strengths,
         decoded.observations.growth_opportunities,
         decoded.observations.mode_insight,
