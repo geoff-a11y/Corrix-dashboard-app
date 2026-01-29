@@ -37,7 +37,7 @@ getRedisClient();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const BUILD_VERSION = '2026-01-28-v2'; // Force redeploy
+const BUILD_VERSION = '2026-01-29-v1'; // Force redeploy with org restructure
 
 // Middleware
 app.use(helmet());
@@ -139,7 +139,16 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 const server = app.listen(PORT, async () => {
   console.log(`[Corrix API] Server running on port ${PORT}`);
 
-  // Run alpha user sync on startup to ensure Corrix Beta org/team exists
+  // Run pending migrations on startup
+  try {
+    console.log('[Corrix API] Running migrations...');
+    const migrationResult = await runMigrations();
+    console.log(`[Corrix API] Migrations: ${migrationResult.executed.length} executed, ${migrationResult.skipped.length} skipped`);
+  } catch (error) {
+    console.error('[Corrix API] Migrations failed:', error);
+  }
+
+  // Run alpha user sync on startup to ensure all orgs/teams exist
   try {
     console.log('[Corrix API] Running startup sync job...');
     await runAlphaUserSyncJob();
