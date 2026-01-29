@@ -28,6 +28,7 @@ import credentialRouter from './routes/credential.js';
 import { requireAuth, enforceOrgScope, requireAdmin } from './middleware/auth.js';
 import { getRedisClient, isRedisAvailable, closeRedis } from './cache/connection.js';
 import { runAlphaUserSyncJob, getAlphaUserSyncJobStatus } from './jobs/AlphaUserSyncJob.js';
+import { runMigrations } from './db/migrate.js';
 
 dotenv.config();
 
@@ -114,6 +115,18 @@ app.get('/api/admin/sync/status', requireAuth, requireAdmin, async (_req, res) =
   } catch (error) {
     console.error('[Admin] Status check failed:', error);
     res.status(500).json({ error: 'Status check failed' });
+  }
+});
+
+// Admin migration endpoint
+app.post('/api/admin/migrate', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    console.log('[Admin] Running migrations...');
+    const result = await runMigrations();
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('[Admin] Migration failed:', error);
+    res.status(500).json({ error: 'Migration failed', message: (error as Error).message });
   }
 });
 

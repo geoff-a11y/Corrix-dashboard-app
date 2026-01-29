@@ -1,9 +1,11 @@
 import { Router, Request, Response } from 'express';
 import db from '../db/connection.js';
+import { ASSESSMENT_TEAM_ID } from '../services/AlphaUserSyncService.js';
 
 const router = Router();
 
-const OPEN_BASELINE_TEAM_ID = 'a0000000-0000-0000-0000-000000000001';
+// Assessment users go to the "Corrix assessment" team
+const OPEN_BASELINE_TEAM_ID = ASSESSMENT_TEAM_ID;
 
 // Compact format (new)
 interface CompactAssessment {

@@ -1,12 +1,29 @@
 import db from '../db/connection.js';
 import { getSupabaseClient, isSupabaseConfigured } from '../cloud/supabase.js';
 
-// Fixed UUIDs for Corrix Beta org/team (deterministic for idempotent seeding)
-// Using distinct UUIDs to avoid conflict with demo data
-const ALPHA_ORG_ID = 'a1fa0000-0000-0000-0000-000000000001';
-const ALPHA_TEAM_ID = 'a1fa0000-0000-0000-0000-000000000002';
-const ALPHA_ORG_NAME = 'Corrix Beta';
-const ALPHA_TEAM_NAME = 'Beta Testers';
+// Organization and team IDs (deterministic UUIDs for idempotent seeding)
+
+// Corrix org - Chrome extension users with live data
+const CORRIX_ORG_ID = 'c0000000-0000-0000-0000-000000000001';
+const CORRIX_TEAM_ID = 'c0000000-0000-0000-0000-000000000002';
+const CORRIX_ORG_NAME = 'Corrix';
+const CORRIX_TEAM_NAME = 'Corrix beta users';
+
+// Corrix assessment org - Users from dashboard.corrix.ai/assessment
+const ASSESSMENT_ORG_ID = 'a0000000-0000-0000-0000-000000000001';
+const ASSESSMENT_TEAM_ID = 'a0000000-0000-0000-0000-000000000002';
+const ASSESSMENT_ORG_NAME = 'Corrix assessment';
+const ASSESSMENT_TEAM_NAME = 'Corrix assessment';
+
+// Pratt Institute org - AI Design pilot
+const PRATT_ORG_ID = 'p0000000-0000-0000-0000-000000000001';
+const PRATT_TEAM_ID = 'p0000000-0000-0000-0000-000000000002';
+const PRATT_ORG_NAME = 'Pratt Institute';
+const PRATT_TEAM_NAME = 'AI Design pilot';
+
+// Legacy aliases for backwards compatibility
+const ALPHA_ORG_ID = CORRIX_ORG_ID;
+const ALPHA_TEAM_ID = CORRIX_TEAM_ID;
 
 interface AlphaUser {
   id: string;
@@ -26,26 +43,52 @@ interface AlphaUser {
 }
 
 /**
- * Ensure the Corrix Beta organization and team exist
+ * Ensure all organizations and teams exist
  */
 export async function ensureAlphaOrganization(): Promise<void> {
-  // Create or update organization
+  // 1. Corrix org - Chrome extension users
   await db.query(
     `INSERT INTO organizations (id, name, domain, settings)
-     VALUES ($1, $2, 'beta.corrix.io', '{"isBetaOrg": true}')
+     VALUES ($1, $2, 'corrix.ai', '{"type": "extension"}')
      ON CONFLICT (id) DO UPDATE SET name = $2`,
-    [ALPHA_ORG_ID, ALPHA_ORG_NAME]
+    [CORRIX_ORG_ID, CORRIX_ORG_NAME]
   );
-
-  // Create or update team
   await db.query(
     `INSERT INTO teams (id, organization_id, name, settings)
-     VALUES ($1, $2, $3, '{"isBetaTeam": true}')
+     VALUES ($1, $2, $3, '{"type": "extension"}')
      ON CONFLICT (id) DO UPDATE SET name = $3`,
-    [ALPHA_TEAM_ID, ALPHA_ORG_ID, ALPHA_TEAM_NAME]
+    [CORRIX_TEAM_ID, CORRIX_ORG_ID, CORRIX_TEAM_NAME]
   );
 
-  console.log('[AlphaUserSync] Corrix Beta org/team ensured');
+  // 2. Corrix assessment org - Assessment users
+  await db.query(
+    `INSERT INTO organizations (id, name, domain, settings)
+     VALUES ($1, $2, 'assessment.corrix.ai', '{"type": "assessment"}')
+     ON CONFLICT (id) DO UPDATE SET name = $2`,
+    [ASSESSMENT_ORG_ID, ASSESSMENT_ORG_NAME]
+  );
+  await db.query(
+    `INSERT INTO teams (id, organization_id, name, settings)
+     VALUES ($1, $2, $3, '{"type": "assessment"}')
+     ON CONFLICT (id) DO UPDATE SET name = $3`,
+    [ASSESSMENT_TEAM_ID, ASSESSMENT_ORG_ID, ASSESSMENT_TEAM_NAME]
+  );
+
+  // 3. Pratt Institute org - AI Design pilot
+  await db.query(
+    `INSERT INTO organizations (id, name, domain, settings)
+     VALUES ($1, $2, 'pratt.edu', '{"type": "pilot"}')
+     ON CONFLICT (id) DO UPDATE SET name = $2`,
+    [PRATT_ORG_ID, PRATT_ORG_NAME]
+  );
+  await db.query(
+    `INSERT INTO teams (id, organization_id, name, settings)
+     VALUES ($1, $2, $3, '{"type": "pilot"}')
+     ON CONFLICT (id) DO UPDATE SET name = $3`,
+    [PRATT_TEAM_ID, PRATT_ORG_ID, PRATT_TEAM_NAME]
+  );
+
+  console.log('[AlphaUserSync] All organizations and teams ensured');
 }
 
 /**
@@ -177,4 +220,13 @@ export async function getAlphaSyncStatus(): Promise<{
   return { configured, alphaOrgExists, userCount };
 }
 
-export { ALPHA_ORG_ID, ALPHA_TEAM_ID };
+export {
+  ALPHA_ORG_ID,
+  ALPHA_TEAM_ID,
+  CORRIX_ORG_ID,
+  CORRIX_TEAM_ID,
+  ASSESSMENT_ORG_ID,
+  ASSESSMENT_TEAM_ID,
+  PRATT_ORG_ID,
+  PRATT_TEAM_ID,
+};
