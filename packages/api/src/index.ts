@@ -37,7 +37,7 @@ getRedisClient();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const BUILD_VERSION = '2026-01-29-v1'; // Force redeploy with org restructure
+const BUILD_VERSION = '2026-01-29-v2'; // Force redeploy - org restructure
 
 // Middleware
 app.use(helmet());
@@ -59,6 +59,7 @@ app.get('/health', async (_req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     redis: redisAvailable ? 'connected' : 'unavailable',
+    version: BUILD_VERSION,
   });
 });
 
