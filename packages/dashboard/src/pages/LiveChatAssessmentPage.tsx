@@ -258,7 +258,8 @@ export default function LiveChatAssessmentPage() {
 
       const decoder = new TextDecoder();
       let fullContent = '';
-      let currentCardContent = '';
+      let completedCards: MessageCard[] = [];
+      let streamingContent = '';
       let cardIndex = 0;
 
       // Add initial assistant message with empty cards
@@ -287,88 +288,66 @@ export default function LiveChatAssessmentPage() {
 
               if (data.type === 'chunk') {
                 fullContent += data.content;
-                currentCardContent += data.content;
+                streamingContent += data.content;
 
-                // Check if we should create a new card (sentence boundary)
-                const sentenceEnd = /[.!?]\s*$/.test(currentCardContent);
-                const longEnough = currentCardContent.length > 60;
+                // Check if we should finalize a card (sentence boundary + length)
+                const sentenceEnd = /[.!?]\s*$/.test(streamingContent);
+                const longEnough = streamingContent.length > 60;
 
                 if (sentenceEnd && longEnough) {
-                  // Finalize current card
-                  const newCard: MessageCard = {
+                  // Finalize current streaming content as a completed card
+                  completedCards.push({
                     id: `card-${cardIndex++}`,
-                    content: currentCardContent.trim(),
+                    content: streamingContent.trim(),
                     isComplete: true,
-                  };
-
-                  setSession(prev => {
-                    const messages = [...prev.messages];
-                    const lastMsg = messages[messages.length - 1];
-                    if (lastMsg.role === 'assistant') {
-                      lastMsg.cards = [...(lastMsg.cards || []), newCard];
-                      lastMsg.content = fullContent;
-                    }
-                    return { ...prev, messages };
                   });
+                  streamingContent = '';
+                }
 
-                  currentCardContent = '';
-                } else {
-                  // Update current streaming card
-                  setSession(prev => {
-                    const messages = [...prev.messages];
-                    const lastMsg = messages[messages.length - 1];
-                    if (lastMsg.role === 'assistant') {
-                      const cards = [...(lastMsg.cards || [])];
-                      const streamingCard = cards.find(c => !c.isComplete);
-                      if (streamingCard) {
-                        streamingCard.content = currentCardContent;
-                      } else if (currentCardContent) {
-                        cards.push({
-                          id: `card-${cardIndex}`,
-                          content: currentCardContent,
-                          isComplete: false,
-                        });
-                      }
-                      lastMsg.cards = cards;
-                      lastMsg.content = fullContent;
-                    }
-                    return { ...prev, messages };
+                // Build cards array: completed cards + current streaming card
+                const allCards = [...completedCards];
+                if (streamingContent) {
+                  allCards.push({
+                    id: `card-streaming`,
+                    content: streamingContent,
+                    isComplete: false,
                   });
                 }
+
+                setSession(prev => {
+                  const messages = [...prev.messages];
+                  const lastMsg = messages[messages.length - 1];
+                  if (lastMsg.role === 'assistant') {
+                    lastMsg.cards = allCards;
+                    lastMsg.content = fullContent;
+                  }
+                  return { ...prev, messages };
+                });
+
               } else if (data.type === 'done') {
-                // Finalize any remaining content as a card
-                if (currentCardContent.trim()) {
-                  setSession(prev => {
-                    const messages = [...prev.messages];
-                    const lastMsg = messages[messages.length - 1];
-                    if (lastMsg.role === 'assistant') {
-                      const cards = [...(lastMsg.cards || [])];
-                      // Find and complete the streaming card or add new one
-                      const streamingCardIdx = cards.findIndex(c => !c.isComplete);
-                      if (streamingCardIdx >= 0) {
-                        cards[streamingCardIdx] = {
-                          ...cards[streamingCardIdx],
-                          content: currentCardContent.trim(),
-                          isComplete: true,
-                        };
-                      } else if (currentCardContent.trim()) {
-                        cards.push({
-                          id: `card-${cardIndex}`,
-                          content: currentCardContent.trim(),
-                          isComplete: true,
-                        });
-                      }
-                      lastMsg.cards = cards;
-                      lastMsg.content = fullContent;
-                    }
-                    return {
-                      ...prev,
-                      messages,
-                      currentState: data.state,
-                      isComplete: data.isComplete,
-                    };
+                // Finalize any remaining streaming content
+                if (streamingContent.trim()) {
+                  completedCards.push({
+                    id: `card-${cardIndex}`,
+                    content: streamingContent.trim(),
+                    isComplete: true,
                   });
                 }
+
+                setSession(prev => {
+                  const messages = [...prev.messages];
+                  const lastMsg = messages[messages.length - 1];
+                  if (lastMsg.role === 'assistant') {
+                    lastMsg.cards = completedCards;
+                    lastMsg.content = fullContent;
+                  }
+                  return {
+                    ...prev,
+                    messages,
+                    currentState: data.state,
+                    isComplete: data.isComplete,
+                  };
+                });
 
                 if (data.isComplete) {
                   setTimeout(() => {
@@ -584,21 +563,20 @@ export default function LiveChatAssessmentPage() {
                     <p className="whitespace-pre-wrap">{message.content}</p>
                   </div>
                 ) : (
-                  <div className="max-w-[80%] space-y-2">
+                  <div className="max-w-[80%] space-y-3">
                     {message.cards && message.cards.length > 0 ? (
                       message.cards.map((card, idx) => (
                         <div
                           key={card.id}
-                          className={`rounded-2xl px-5 py-3 bg-[#242424] border border-gray-700 transform transition-all duration-300 ${
-                            card.isComplete ? 'opacity-100 translate-y-0' : 'opacity-80'
-                          }`}
+                          className="rounded-2xl px-5 py-3 bg-[#242424] border border-gray-700 animate-fade-in-up"
                           style={{
-                            animationDelay: `${idx * 50}ms`,
+                            animationDelay: `${idx * 150}ms`,
+                            animationFillMode: 'both',
                           }}
                         >
-                          <p className="whitespace-pre-wrap">{card.content}</p>
+                          <p className="whitespace-pre-wrap leading-relaxed">{card.content}</p>
                           {!card.isComplete && (
-                            <span className="inline-block w-2 h-4 bg-gray-500 animate-pulse ml-1" />
+                            <span className="inline-block w-2 h-4 bg-[#7877DF] animate-pulse ml-1 rounded-sm" />
                           )}
                         </div>
                       ))
