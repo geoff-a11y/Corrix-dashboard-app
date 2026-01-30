@@ -103,10 +103,17 @@ const SCENARIO_CATEGORIES = [
   },
 ];
 
+interface MessageCard {
+  id: string;
+  content: string;
+  isComplete: boolean;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  cards?: MessageCard[]; // For assistant messages, split into cards
   timestamp: Date;
 }
 
@@ -141,6 +148,30 @@ export default function LiveChatAssessmentPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [session.messages]);
 
+  // Parse text into cards (by sentence groups)
+  const parseIntoCards = (text: string): MessageCard[] => {
+    // Split by sentence-ending punctuation followed by space
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    const cards: MessageCard[] = [];
+    let currentCard = '';
+    let cardId = 0;
+
+    for (const sentence of sentences) {
+      currentCard += (currentCard ? ' ' : '') + sentence;
+      // Create a new card every 1-2 sentences or if content is long enough
+      if (currentCard.length > 80 || sentences.indexOf(sentence) === sentences.length - 1) {
+        cards.push({
+          id: `card-${cardId++}`,
+          content: currentCard.trim(),
+          isComplete: true,
+        });
+        currentCard = '';
+      }
+    }
+
+    return cards;
+  };
+
   // Start a new session
   const startSession = async () => {
     if (!selectedVariant) return;
@@ -161,6 +192,9 @@ export default function LiveChatAssessmentPage() {
 
       const data = await response.json();
 
+      // Parse opening message into cards
+      const openingCards = parseIntoCards(data.openingMessage);
+
       setSession({
         sessionId: data.sessionId,
         scenarioId: selectedVariant,
@@ -168,6 +202,7 @@ export default function LiveChatAssessmentPage() {
           id: '0',
           role: 'assistant',
           content: data.openingMessage,
+          cards: openingCards,
           timestamp: new Date(),
         }],
         currentState: 'opening',
@@ -183,7 +218,7 @@ export default function LiveChatAssessmentPage() {
     }
   };
 
-  // Send a message
+  // Send a message with streaming
   const sendMessage = async () => {
     if (!inputValue.trim() || !session.sessionId || isLoading) return;
 
@@ -194,6 +229,8 @@ export default function LiveChatAssessmentPage() {
       timestamp: new Date(),
     };
 
+    const assistantMessageId = (Date.now() + 1).toString();
+
     setSession(prev => ({
       ...prev,
       messages: [...prev.messages, userMessage],
@@ -203,7 +240,7 @@ export default function LiveChatAssessmentPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/live-chat/message`, {
+      const response = await fetch(`${API_URL}/live-chat/message/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -216,27 +253,134 @@ export default function LiveChatAssessmentPage() {
         throw new Error('Failed to send message');
       }
 
-      const data = await response.json();
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date(),
-      };
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      let currentCardContent = '';
+      let cardIndex = 0;
 
+      // Add initial assistant message with empty cards
       setSession(prev => ({
         ...prev,
-        messages: [...prev.messages, assistantMessage],
-        currentState: data.state,
-        isComplete: data.isComplete,
+        messages: [...prev.messages, {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: '',
+          cards: [],
+          timestamp: new Date(),
+        }],
       }));
 
-      if (data.isComplete) {
-        // Navigate to credential page with session ID
-        setTimeout(() => {
-          navigate(`/verify/${data.credentialId}`);
-        }, 2000);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.type === 'chunk') {
+                fullContent += data.content;
+                currentCardContent += data.content;
+
+                // Check if we should create a new card (sentence boundary)
+                const sentenceEnd = /[.!?]\s*$/.test(currentCardContent);
+                const longEnough = currentCardContent.length > 60;
+
+                if (sentenceEnd && longEnough) {
+                  // Finalize current card
+                  const newCard: MessageCard = {
+                    id: `card-${cardIndex++}`,
+                    content: currentCardContent.trim(),
+                    isComplete: true,
+                  };
+
+                  setSession(prev => {
+                    const messages = [...prev.messages];
+                    const lastMsg = messages[messages.length - 1];
+                    if (lastMsg.role === 'assistant') {
+                      lastMsg.cards = [...(lastMsg.cards || []), newCard];
+                      lastMsg.content = fullContent;
+                    }
+                    return { ...prev, messages };
+                  });
+
+                  currentCardContent = '';
+                } else {
+                  // Update current streaming card
+                  setSession(prev => {
+                    const messages = [...prev.messages];
+                    const lastMsg = messages[messages.length - 1];
+                    if (lastMsg.role === 'assistant') {
+                      const cards = [...(lastMsg.cards || [])];
+                      const streamingCard = cards.find(c => !c.isComplete);
+                      if (streamingCard) {
+                        streamingCard.content = currentCardContent;
+                      } else if (currentCardContent) {
+                        cards.push({
+                          id: `card-${cardIndex}`,
+                          content: currentCardContent,
+                          isComplete: false,
+                        });
+                      }
+                      lastMsg.cards = cards;
+                      lastMsg.content = fullContent;
+                    }
+                    return { ...prev, messages };
+                  });
+                }
+              } else if (data.type === 'done') {
+                // Finalize any remaining content as a card
+                if (currentCardContent.trim()) {
+                  setSession(prev => {
+                    const messages = [...prev.messages];
+                    const lastMsg = messages[messages.length - 1];
+                    if (lastMsg.role === 'assistant') {
+                      const cards = [...(lastMsg.cards || [])];
+                      // Find and complete the streaming card or add new one
+                      const streamingCardIdx = cards.findIndex(c => !c.isComplete);
+                      if (streamingCardIdx >= 0) {
+                        cards[streamingCardIdx] = {
+                          ...cards[streamingCardIdx],
+                          content: currentCardContent.trim(),
+                          isComplete: true,
+                        };
+                      } else if (currentCardContent.trim()) {
+                        cards.push({
+                          id: `card-${cardIndex}`,
+                          content: currentCardContent.trim(),
+                          isComplete: true,
+                        });
+                      }
+                      lastMsg.cards = cards;
+                      lastMsg.content = fullContent;
+                    }
+                    return {
+                      ...prev,
+                      messages,
+                      currentState: data.state,
+                      isComplete: data.isComplete,
+                    };
+                  });
+                }
+
+                if (data.isComplete) {
+                  setTimeout(() => {
+                    navigate(`/verify/${data.credentialId}`);
+                  }, 2000);
+                }
+              }
+            } catch (parseErr) {
+              // Ignore parse errors for partial chunks
+            }
+          }
+        }
       }
     } catch (err) {
       setError('Failed to send message. Please try again.');
@@ -435,15 +579,36 @@ export default function LiveChatAssessmentPage() {
                 key={message.id}
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-5 py-3 ${
-                    message.role === 'user'
-                      ? 'bg-[#7877DF] text-white'
-                      : 'bg-[#242424] border border-gray-700'
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                </div>
+                {message.role === 'user' ? (
+                  <div className="max-w-[80%] rounded-2xl px-5 py-3 bg-[#7877DF] text-white">
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                ) : (
+                  <div className="max-w-[80%] space-y-2">
+                    {message.cards && message.cards.length > 0 ? (
+                      message.cards.map((card, idx) => (
+                        <div
+                          key={card.id}
+                          className={`rounded-2xl px-5 py-3 bg-[#242424] border border-gray-700 transform transition-all duration-300 ${
+                            card.isComplete ? 'opacity-100 translate-y-0' : 'opacity-80'
+                          }`}
+                          style={{
+                            animationDelay: `${idx * 50}ms`,
+                          }}
+                        >
+                          <p className="whitespace-pre-wrap">{card.content}</p>
+                          {!card.isComplete && (
+                            <span className="inline-block w-2 h-4 bg-gray-500 animate-pulse ml-1" />
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl px-5 py-3 bg-[#242424] border border-gray-700">
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
 

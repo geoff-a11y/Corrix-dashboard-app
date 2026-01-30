@@ -191,6 +191,154 @@ router.post('/message', async (req: Request, res: Response) => {
   }
 });
 
+// Send a message with streaming response (SSE)
+router.post('/message/stream', async (req: Request, res: Response) => {
+  try {
+    const { sessionId, message } = req.body;
+
+    if (!sessionId || !message) {
+      return res.status(400).json({ error: 'sessionId and message are required' });
+    }
+
+    // Get session
+    const sessionResult = await db.query(
+      `SELECT ls.*, sv.system_prompt, sv.assessment_moments, sv.min_exchanges, sv.max_exchanges
+       FROM live_sessions ls
+       JOIN scenario_variants sv ON ls.scenario_variant_id = sv.id
+       WHERE ls.session_token = $1`,
+      [sessionId]
+    );
+
+    if (sessionResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const session = sessionResult.rows[0];
+
+    if (session.status !== 'active') {
+      return res.status(400).json({ error: 'Session is no longer active' });
+    }
+
+    // Get message history
+    const messagesResult = await db.query(
+      `SELECT role, content FROM live_messages
+       WHERE session_id = $1
+       ORDER BY sequence_number ASC`,
+      [session.id]
+    );
+
+    const messageHistory = messagesResult.rows;
+    const nextSequence = messageHistory.length + 1;
+
+    // Detect signals in user message
+    const service = new LiveChatService();
+    const signals = service.detectSignals(message, session.current_state);
+
+    // Store user message
+    await db.query(
+      `INSERT INTO live_messages (session_id, role, content, sequence_number, session_state, signals)
+       VALUES ($1, 'user', $2, $3, $4, $5)`,
+      [session.id, message, nextSequence, session.current_state, JSON.stringify(signals)]
+    );
+
+    // Update session with user message stats
+    await db.query(
+      `UPDATE live_sessions SET
+        exchange_count = exchange_count + 1,
+        total_user_chars = total_user_chars + $1,
+        signals_detected = signals_detected || $2,
+        last_activity_at = NOW()
+       WHERE id = $3`,
+      [message.length, JSON.stringify(signals), session.id]
+    );
+
+    // Determine next state and whether to inject a moment
+    const assessmentMoments = session.assessment_moments || [];
+    const stateTransition = service.analyzeState(
+      session.current_state,
+      messageHistory,
+      message,
+      assessmentMoments,
+      session.exchange_count
+    );
+
+    // Set up SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    // Stream the response
+    let fullResponse = '';
+    try {
+      for await (const chunk of service.generateResponseStream(
+        session.system_prompt,
+        [...messageHistory, { role: 'user', content: message }],
+        stateTransition.injection
+      )) {
+        fullResponse += chunk;
+        res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+      }
+    } catch (streamError) {
+      console.error('[LiveChat] Stream error:', streamError);
+      res.write(`data: ${JSON.stringify({ type: 'error', message: 'Streaming failed' })}\n\n`);
+      res.end();
+      return;
+    }
+
+    // Check if session should complete
+    const isComplete = service.shouldComplete(
+      session.exchange_count + 1,
+      session.min_exchanges,
+      session.max_exchanges,
+      stateTransition.newState
+    );
+
+    // Store assistant message
+    await db.query(
+      `INSERT INTO live_messages (session_id, role, content, sequence_number, session_state)
+       VALUES ($1, 'assistant', $2, $3, $4)`,
+      [session.id, fullResponse, nextSequence + 1, stateTransition.newState]
+    );
+
+    // Update session state
+    const statesVisited = session.states_visited || [];
+    if (!statesVisited.includes(stateTransition.newState)) {
+      statesVisited.push(stateTransition.newState);
+    }
+
+    await db.query(
+      `UPDATE live_sessions SET
+        current_state = $1,
+        states_visited = $2,
+        exchange_count = exchange_count + 1,
+        total_ai_chars = total_ai_chars + $3,
+        last_activity_at = NOW()
+       WHERE id = $4`,
+      [stateTransition.newState, statesVisited, fullResponse.length, session.id]
+    );
+
+    // If complete, generate credential
+    let credentialId = null;
+    if (isComplete) {
+      credentialId = await service.completeSession(session.id);
+    }
+
+    // Send final metadata
+    res.write(`data: ${JSON.stringify({
+      type: 'done',
+      state: stateTransition.newState,
+      isComplete,
+      credentialId,
+    })}\n\n`);
+
+    res.end();
+  } catch (error) {
+    console.error('[LiveChat] Stream message error:', error);
+    res.status(500).json({ error: 'Failed to process message' });
+  }
+});
+
 // Complete a session and get results
 router.post('/complete', async (req: Request, res: Response) => {
   try {

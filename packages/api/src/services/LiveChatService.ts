@@ -315,6 +315,45 @@ export class LiveChatService {
   }
 
   /**
+   * Generate AI response with streaming
+   */
+  async *generateResponseStream(
+    systemPrompt: string,
+    history: Message[],
+    injection: string | null
+  ): AsyncGenerator<string, void, unknown> {
+    // Build messages array for Claude
+    const messages = history.map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    }));
+
+    // If there's an injection, add it as a system instruction
+    let enhancedSystem = systemPrompt;
+    if (injection) {
+      enhancedSystem += `\n\n[Assessment moment - incorporate naturally into your response: ${injection}]`;
+    }
+
+    try {
+      const stream = this.anthropic.messages.stream({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        system: enhancedSystem,
+        messages,
+      });
+
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+          yield event.delta.text;
+        }
+      }
+    } catch (error) {
+      console.error('[LiveChatService] Claude streaming error:', error);
+      throw new Error('Failed to generate response');
+    }
+  }
+
+  /**
    * Determine if session should complete
    */
   shouldComplete(
