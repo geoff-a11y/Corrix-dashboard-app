@@ -39,7 +39,7 @@ getRedisClient();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const BUILD_VERSION = '2026-01-29-v7'; // Assessment metadata + device/geo/behavioral analytics
+const BUILD_VERSION = '2026-01-30-v8'; // Assessment metadata + device/geo/behavioral analytics
 
 // Middleware
 app.use(helmet());
