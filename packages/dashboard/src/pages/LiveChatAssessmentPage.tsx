@@ -258,9 +258,6 @@ export default function LiveChatAssessmentPage() {
 
       const decoder = new TextDecoder();
       let fullContent = '';
-      let completedCards: MessageCard[] = [];
-      let streamingContent = '';
-      let cardIndex = 0;
 
       // Add initial assistant message with empty cards
       setSession(prev => ({
@@ -288,57 +285,31 @@ export default function LiveChatAssessmentPage() {
 
               if (data.type === 'chunk') {
                 fullContent += data.content;
-                streamingContent += data.content;
 
-                // Check if we should finalize a card (sentence boundary + length)
-                const sentenceEnd = /[.!?]\s*$/.test(streamingContent);
-                const longEnough = streamingContent.length > 60;
-
-                if (sentenceEnd && longEnough) {
-                  // Finalize current streaming content as a completed card
-                  completedCards.push({
-                    id: `card-${cardIndex++}`,
-                    content: streamingContent.trim(),
-                    isComplete: true,
-                  });
-                  streamingContent = '';
-                }
-
-                // Build cards array: completed cards + current streaming card
-                const allCards = [...completedCards];
-                if (streamingContent) {
-                  allCards.push({
-                    id: `card-streaming`,
-                    content: streamingContent,
-                    isComplete: false,
-                  });
-                }
-
+                // Show single streaming card while typing
                 setSession(prev => {
                   const messages = [...prev.messages];
                   const lastMsg = messages[messages.length - 1];
                   if (lastMsg.role === 'assistant') {
-                    lastMsg.cards = allCards;
+                    lastMsg.cards = [{
+                      id: 'streaming',
+                      content: fullContent,
+                      isComplete: false,
+                    }];
                     lastMsg.content = fullContent;
                   }
                   return { ...prev, messages };
                 });
 
               } else if (data.type === 'done') {
-                // Finalize any remaining streaming content
-                if (streamingContent.trim()) {
-                  completedCards.push({
-                    id: `card-${cardIndex}`,
-                    content: streamingContent.trim(),
-                    isComplete: true,
-                  });
-                }
+                // Parse into multiple cards when complete
+                const finalCards = parseIntoCards(fullContent);
 
                 setSession(prev => {
                   const messages = [...prev.messages];
                   const lastMsg = messages[messages.length - 1];
                   if (lastMsg.role === 'assistant') {
-                    lastMsg.cards = completedCards;
+                    lastMsg.cards = finalCards;
                     lastMsg.content = fullContent;
                   }
                   return {
