@@ -9,6 +9,8 @@ import { VerifyPage } from '@/pages/VerifyPage';
 import BaselinePage from '@/pages/BaselinePage';
 import CredentialPage from '@/pages/CredentialPage';
 import CredentialVerifyPage from '@/pages/CredentialVerifyPage';
+import AssessmentLandingPage from '@/pages/AssessmentLandingPage';
+import LiveChatAssessmentPage from '@/pages/LiveChatAssessmentPage';
 import { HomePage } from '@/pages/HomePage';
 import { PerformancePage } from '@/pages/PerformancePage';
 import { BehaviorsPage } from '@/pages/BehaviorsPage';
@@ -23,8 +25,9 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/verify" element={<VerifyPage />} />
         <Route path="/baseline" element={<BaselinePage />} />
+        <Route path="/assessment" element={<AssessmentLandingPage />} />
         <Route path="/quick-assessment" element={<CredentialPage />} />
-        <Route path="/assessment" element={<Navigate to="/quick-assessment" replace />} />
+        <Route path="/live-chat-assessment/*" element={<LiveChatAssessmentPage />} />
         <Route path="/credential" element={<Navigate to="/quick-assessment" replace />} />
         <Route path="/verify/:credentialId" element={<CredentialVerifyPage />} />
         <Route

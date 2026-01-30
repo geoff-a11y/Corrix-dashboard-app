@@ -25,6 +25,8 @@ import performanceRouter from './routes/performance.js';
 import baselineRouter from './routes/baseline.js';
 // Credential system (public)
 import credentialRouter from './routes/credential.js';
+// Live chat assessment (public)
+import liveChatRouter from './routes/live-chat.js';
 import { requireAuth, enforceOrgScope, requireAdmin } from './middleware/auth.js';
 import { getRedisClient, isRedisAvailable, closeRedis } from './cache/connection.js';
 import { runAlphaUserSyncJob, getAlphaUserSyncJobStatus } from './jobs/AlphaUserSyncJob.js';
@@ -37,7 +39,7 @@ getRedisClient();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const BUILD_VERSION = '2026-01-29-v2'; // Force redeploy - org restructure
+const BUILD_VERSION = '2026-01-29-v3'; // Live chat assessment
 
 // Middleware
 app.use(helmet());
@@ -71,6 +73,9 @@ app.use('/api/baseline', baselineRouter);
 
 // Credential system (public - no auth required)
 app.use('/api/credential', credentialRouter);
+
+// Live chat assessment (public - no auth required)
+app.use('/api/live-chat', liveChatRouter);
 
 // API routes (protected)
 app.use('/api/scores', requireAuth, enforceOrgScope, scoresRouter);

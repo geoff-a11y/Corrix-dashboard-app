@@ -117,12 +117,16 @@ export interface DecodedCredentialAssessment {
   }>;
 }
 
+// Assessment types
+export type AssessmentType = 'quick' | 'live_chat';
+
 // Credential from API
 export interface Credential {
   id: string;
   credential_id: string;
   email: string;
   holder_name: string | null;
+  assessment_type: AssessmentType;
   platform_detected: Platform;
   raw_overall_score: number;
   calibrated_overall_score: number;

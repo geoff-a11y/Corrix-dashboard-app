@@ -312,10 +312,16 @@ function ValidCredential({ credential }: { credential: Credential }) {
         </div>
 
         {/* Assessment Details */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div>
             <p className="text-gray-500">Credential ID</p>
             <p className="font-mono text-white text-xs">{credential.credential_id}</p>
+          </div>
+          <div>
+            <p className="text-gray-500">Assessment</p>
+            <p className="text-white">
+              {credential.assessment_type === 'live_chat' ? 'Live Chat' : 'Quick Assessment'}
+            </p>
           </div>
           <div>
             <p className="text-gray-500">Platform</p>

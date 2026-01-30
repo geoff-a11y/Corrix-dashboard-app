@@ -12,6 +12,7 @@
     "seed": "tsx scripts/seed-demo-data.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "@corrix/shared": "*",
     "@supabase/supabase-js": "^2.39.0",
     "bcryptjs": "^3.0.3",
@@ -21,6 +22,7 @@
     "ioredis": "^5.3.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.11.3",
+    "uuid": "^9.0.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -30,6 +32,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.0",
     "@types/pg": "^8.10.9",
+    "@types/uuid": "^9.0.0",
     "dotenv": "^17.2.3",
     "tsx": "^4.6.2",
     "typescript": "^5.3.0"
