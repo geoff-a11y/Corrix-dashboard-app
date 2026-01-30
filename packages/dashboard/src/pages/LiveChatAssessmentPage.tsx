@@ -269,7 +269,7 @@ export default function LiveChatAssessmentPage() {
   const renderScenarioSelection = () => (
     <div className="min-h-screen bg-[#1A1A1A] text-white">
       {/* Header */}
-      <header className="border-b border-gray-800">
+      <header className="bg-black border-b border-gray-800">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <img src="/images/logo.png" alt="Corrix" className="h-8" />
           <button
@@ -409,7 +409,7 @@ export default function LiveChatAssessmentPage() {
     return (
       <div className="min-h-screen bg-[#1A1A1A] text-white flex flex-col">
         {/* Header */}
-        <header className="border-b border-gray-800 flex-shrink-0">
+        <header className="bg-black border-b border-gray-800 flex-shrink-0">
           <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src="/images/logo.png" alt="Corrix" className="h-8" />
