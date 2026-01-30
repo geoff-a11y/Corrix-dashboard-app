@@ -144,8 +144,8 @@ export default function AssessmentLandingPage() {
               <div>
                 <h3 className="font-semibold text-white mb-2">Your privacy is protected</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  Your conversation data is analyzed securely and never stored beyond what's needed to generate your credential.
-                  We don't share your information with third parties, and you control your data at all times.
+                  Your conversations are analyzed by your own AI tool and never sent to or stored by Corrix.
+                  Your credential is yours to share with employers or anyone you choose — we never sell your personal data.
                 </p>
                 <a
                   href="https://corrix.ai/privacy"
