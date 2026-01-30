@@ -199,11 +199,27 @@ export default function LiveChatAssessmentPage() {
     return cards;
   };
 
+  // Get device context for analytics
+  const getDeviceContext = () => {
+    const width = window.innerWidth;
+    let screenCategory = 'desktop';
+    if (width < 640) screenCategory = 'mobile';
+    else if (width < 1024) screenCategory = 'tablet';
+
+    return {
+      screenCategory,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      referralSource: document.referrer || null,
+    };
+  };
+
   const startSession = async () => {
     if (!selectedVariant) return;
 
     setIsLoading(true);
     setError(null);
+
+    const deviceContext = getDeviceContext();
 
     try {
       const response = await fetch(`${API_URL}/live-chat/start`, {
@@ -213,6 +229,10 @@ export default function LiveChatAssessmentPage() {
           scenarioId: selectedVariant,
           industry: selectedIndustry,
           role: selectedRole,
+          // Device context
+          screenCategory: deviceContext.screenCategory,
+          timezone: deviceContext.timezone,
+          referralSource: deviceContext.referralSource,
         }),
       });
 

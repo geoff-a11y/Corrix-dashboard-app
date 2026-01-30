@@ -1,6 +1,6 @@
 FROM node:20-alpine
 
-# Cache bust: 2026-01-29-v5
+# Cache bust: 2026-01-29-v7
 WORKDIR /app
 
 # Copy package files

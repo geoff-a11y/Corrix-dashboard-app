@@ -2,20 +2,36 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../db/connection.js';
 import { LiveChatService } from '../services/LiveChatService.js';
+import { extractUserContext } from '../lib/context-utils.js';
 
 const router = Router();
 
 // Start a new live chat session
 router.post('/start', async (req: Request, res: Response) => {
   try {
-    const { scenarioId, industry, role } = req.body;
+    const {
+      scenarioId,
+      industry,
+      role,
+      companySize,
+      yearsExperience,
+      primaryFunction,
+      // Device context from frontend
+      screenCategory,
+      timezone,
+      countryCode,
+      region,
+      referralSource,
+    } = req.body;
 
     if (!scenarioId) {
       return res.status(400).json({ error: 'scenarioId is required' });
     }
 
-    // Log user context for future personalization
-    console.log(`[LiveChat] Starting session: scenario=${scenarioId}, industry=${industry}, role=${role}`);
+    // Extract additional context from request
+    const userContext = extractUserContext(req);
+
+    console.log(`[LiveChat] Starting session: scenario=${scenarioId}, industry=${industry}, role=${role}, country=${userContext.countryCode || countryCode}`);
 
     // Get scenario variant
     const scenarioResult = await db.query(
@@ -30,13 +46,34 @@ router.post('/start', async (req: Request, res: Response) => {
     const scenario = scenarioResult.rows[0];
     const sessionToken = uuidv4();
 
-    // Create session
+    // Create session with full context
     const sessionResult = await db.query(
       `INSERT INTO live_sessions (
-        session_token, scenario_variant_id, scenario_id, current_state
-      ) VALUES ($1, $2, $3, 'opening')
+        session_token, scenario_variant_id, scenario_id, current_state,
+        industry, role_level, company_size, years_experience, primary_function,
+        country_code, region, timezone,
+        device_type, browser_family, os_family, screen_category,
+        referral_source
+      ) VALUES ($1, $2, $3, 'opening', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING id, session_token`,
-      [sessionToken, scenario.id, scenarioId]
+      [
+        sessionToken,
+        scenario.id,
+        scenarioId,
+        industry || null,
+        role || null,
+        companySize || null,
+        yearsExperience || null,
+        primaryFunction || null,
+        countryCode || userContext.countryCode || null,
+        region || userContext.region || null,
+        timezone || userContext.timezone || null,
+        userContext.deviceType,
+        userContext.browserFamily,
+        userContext.osFamily,
+        screenCategory || userContext.screenCategory || null,
+        referralSource || userContext.referralSource || null,
+      ]
     );
 
     const session = sessionResult.rows[0];

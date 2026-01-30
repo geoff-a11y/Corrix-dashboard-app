@@ -5,6 +5,7 @@ import {
   calculateQualificationRating,
   generateVerificationUrl,
 } from '../lib/credential-utils.js';
+import { calculateBehavioralMetrics } from '../lib/context-utils.js';
 
 // Assessment team ID for live chat credentials
 const ASSESSMENT_TEAM_ID = 'a0000000-0000-0000-0000-000000000002';
@@ -386,7 +387,7 @@ export class LiveChatService {
   async completeSession(sessionId: string, email?: string): Promise<string> {
     // Get session and all messages
     const sessionResult = await db.query(
-      `SELECT ls.*, sv.name as scenario_name, sv.category
+      `SELECT ls.*, sv.name as scenario_name, sv.category, sv.scenario_id
        FROM live_sessions ls
        JOIN scenario_variants sv ON ls.scenario_variant_id = sv.id
        WHERE ls.id = $1`,
@@ -399,9 +400,9 @@ export class LiveChatService {
 
     const session = sessionResult.rows[0];
 
-    // Get all signals detected in the session
+    // Get all messages with timestamps for behavioral metrics
     const messagesResult = await db.query(
-      `SELECT role, content, signals
+      `SELECT role, content, signals, created_at
        FROM live_messages
        WHERE session_id = $1
        ORDER BY sequence_number`,
@@ -415,6 +416,18 @@ export class LiveChatService {
         allSignals.push(...msg.signals);
       }
     }
+
+    // Calculate behavioral metrics from messages
+    const behavioralMetrics = calculateBehavioralMetrics(messagesResult.rows);
+
+    // Update session with behavioral metrics
+    await db.query(
+      `UPDATE live_sessions SET
+        avg_response_time_seconds = $1,
+        avg_message_length = $2
+       WHERE id = $3`,
+      [behavioralMetrics.avgResponseTimeSeconds, behavioralMetrics.avgMessageLength, sessionId]
+    );
 
     // Calculate scores from signals
     const scores = this.calculateScores(allSignals, session);
@@ -430,7 +443,7 @@ export class LiveChatService {
     // Determine profile type based on scenario category
     const profileType = this.getProfileType(session.category, mode.primary);
 
-    // Insert credential
+    // Insert credential with metadata
     const credResult = await db.query(
       `INSERT INTO credentials (
         credential_id,
@@ -459,11 +472,17 @@ export class LiveChatService {
         conversation_count_analyzed,
         team_id,
         verification_url,
-        raw_assessment_json
+        raw_assessment_json,
+        industry,
+        role_level,
+        country_code,
+        scenario_category,
+        company_size
       ) VALUES (
         $1, $2, 'live_chat', 'claude', $3, $3, $4, $5, $6,
         $7, $8, $9, $10, $11, $12, $13, $14, NULL,
-        $15, $16, $17, $18, $19, $20, $21, $22, $23
+        $15, $16, $17, $18, $19, $20, $21, $22, $23,
+        $24, $25, $26, $27, $28
       )
       RETURNING id, credential_id`,
       [
@@ -490,6 +509,11 @@ export class LiveChatService {
         ASSESSMENT_TEAM_ID,
         verificationUrl,
         JSON.stringify({ session, scores, mode, signals: allSignals }),
+        session.industry || null,
+        session.role_level || null,
+        session.country_code || null,
+        session.category || null,
+        session.company_size || null,
       ]
     );
 
@@ -513,6 +537,78 @@ export class LiveChatService {
         scores.overall,
         JSON.stringify({ scores, mode }),
         sessionId,
+      ]
+    );
+
+    // Calculate duration
+    const durationSeconds = session.created_at && session.completed_at
+      ? Math.round((new Date().getTime() - new Date(session.created_at).getTime()) / 1000)
+      : null;
+
+    // Insert assessment metadata for analytics
+    await db.query(
+      `INSERT INTO assessment_metadata (
+        credential_id,
+        live_session_id,
+        industry,
+        role_level,
+        company_size,
+        years_experience,
+        primary_function,
+        country_code,
+        region,
+        timezone,
+        device_type,
+        browser_family,
+        os_family,
+        screen_category,
+        started_at,
+        completed_at,
+        duration_seconds,
+        assessment_type,
+        scenario_category,
+        scenario_id,
+        platform_detected,
+        exchange_count,
+        total_user_chars,
+        total_ai_chars,
+        avg_response_time_seconds,
+        avg_message_length,
+        question_ratio,
+        revision_count,
+        referral_source
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        $11, $12, $13, $14, $15, NOW(), $16, 'live_chat',
+        $17, $18, 'claude', $19, $20, $21, $22, $23, $24, $25, $26
+      )`,
+      [
+        credential.id,
+        sessionId,
+        session.industry || null,
+        session.role_level || null,
+        session.company_size || null,
+        session.years_experience || null,
+        session.primary_function || null,
+        session.country_code || null,
+        session.region || null,
+        session.timezone || null,
+        session.device_type || null,
+        session.browser_family || null,
+        session.os_family || null,
+        session.screen_category || null,
+        session.created_at,
+        durationSeconds,
+        session.category || null,
+        session.scenario_id || null,
+        session.exchange_count,
+        session.total_user_chars || 0,
+        session.total_ai_chars || 0,
+        behavioralMetrics.avgResponseTimeSeconds,
+        behavioralMetrics.avgMessageLength,
+        behavioralMetrics.questionRatio,
+        behavioralMetrics.revisionCount,
+        session.referral_source || null,
       ]
     );
 
