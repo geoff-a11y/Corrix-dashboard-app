@@ -1,6 +1,6 @@
 FROM node:20-alpine
 
-# Cache bust: 2026-01-30-v8-metadata
+ARG CACHEBUST=1
 WORKDIR /app
 
 # Copy package files
