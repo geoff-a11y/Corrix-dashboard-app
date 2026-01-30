@@ -25,9 +25,9 @@ ALTER TABLE live_sessions ADD COLUMN IF NOT EXISTS avg_message_length FLOAT;
 -- Create assessment_metadata table for comprehensive analytics
 CREATE TABLE IF NOT EXISTS assessment_metadata (
   id SERIAL PRIMARY KEY,
-  credential_id INTEGER REFERENCES credentials(id),
-  baseline_assessment_id INTEGER REFERENCES baseline_assessments(id),
-  live_session_id INTEGER REFERENCES live_sessions(id),
+  credential_id UUID REFERENCES credentials(id),
+  baseline_assessment_id UUID REFERENCES baseline_assessments(id),
+  live_session_id UUID REFERENCES live_sessions(id),
 
   -- Professional context
   industry VARCHAR(50),
