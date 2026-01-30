@@ -19,6 +19,9 @@ COPY packages/api ./packages/api
 RUN npm run build --workspace=@corrix/shared
 RUN npm run build --workspace=@corrix/api
 
+# Copy migrations to dist (they're .sql files, not compiled)
+RUN cp -r /app/packages/api/src/db/migrations /app/packages/api/dist/db/
+
 WORKDIR /app/packages/api
 
 # Expose port (Railway sets PORT env var)
