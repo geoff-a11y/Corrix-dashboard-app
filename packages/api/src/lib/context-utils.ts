@@ -1,4 +1,4 @@
-import UAParser from 'ua-parser-js';
+import { UAParser } from 'ua-parser-js';
 import { Request } from 'express';
 
 export interface UserContext {
@@ -25,17 +25,17 @@ export interface UserContext {
  * Extract user context from request headers and body
  */
 export function extractUserContext(req: Request): UserContext {
-  const ua = new UAParser(req.headers['user-agent']);
+  const parser = new UAParser(req.headers['user-agent'] as string);
 
   // Device type detection
-  const deviceType = ua.getDevice().type || 'desktop';
+  const deviceType = parser.getDevice().type || 'desktop';
 
   // Browser family
-  const browserName = ua.getBrowser().name || 'Unknown';
+  const browserName = parser.getBrowser().name || 'Unknown';
   const browserFamily = normalizeBrowserFamily(browserName);
 
   // OS family
-  const osName = ua.getOS().name || 'Unknown';
+  const osName = parser.getOS().name || 'Unknown';
   const osFamily = normalizeOsFamily(osName);
 
   // Screen category (from body if provided)
