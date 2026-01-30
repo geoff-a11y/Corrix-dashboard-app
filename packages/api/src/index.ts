@@ -136,6 +136,56 @@ app.post('/api/admin/migrate', requireAuth, requireAdmin, async (_req, res) => {
   }
 });
 
+// One-time endpoint to seed migrations table with already-run migrations
+app.post('/api/admin/seed-migrations', async (_req, res) => {
+  try {
+    const alreadyRunMigrations = [
+      '001_initial_schema.sql',
+      '002_seed_demo_data.sql',
+      '003_temporal_indicators.sql',
+      '004_skill_tracking.sql',
+      '005_user_metadata.sql',
+      '006_benchmarks.sql',
+      '007_seed_phase2_data.sql',
+      '008_seed_multiorg_data.sql',
+      '009_aggregation_tables.sql',
+      '010_coaching_outcomes.sql',
+      '011_domain_scores.sql',
+      '012_admin_accounts.sql',
+      '013_admin_passwords.sql',
+      '014_baseline_assessments.sql',
+      '015_credentials.sql',
+      '016_restructure_orgs.sql',
+    ];
+
+    const db = (await import('./db/connection.js')).default;
+
+    // Create migrations table if needed
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS migrations (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        executed_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    // Insert all already-run migrations
+    for (const migration of alreadyRunMigrations) {
+      await db.query(
+        `INSERT INTO migrations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
+        [migration]
+      );
+    }
+
+    // Now run any new migrations
+    const result = await runMigrations();
+    res.json({ success: true, seeded: alreadyRunMigrations.length, ...result });
+  } catch (error) {
+    console.error('[Admin] Seed migrations failed:', error);
+    res.status(500).json({ error: 'Failed', message: (error as Error).message });
+  }
+});
+
 // Error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[API Error]', err);
