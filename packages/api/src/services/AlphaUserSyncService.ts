@@ -9,7 +9,7 @@ const CORRIX_TEAM_ID = 'c0000000-0000-0000-0000-000000000002';
 const CORRIX_ORG_NAME = 'Corrix';
 const CORRIX_TEAM_NAME = 'Corrix beta users';
 
-// Corrix assessment org - Users from dashboard.corrix.ai/assessment
+// Corrix assessment org - Users from dashboard.corrix.ai/quick-assessment
 const ASSESSMENT_ORG_ID = 'a0000000-0000-0000-0000-000000000001';
 const ASSESSMENT_TEAM_ID = 'a0000000-0000-0000-0000-000000000002';
 const ASSESSMENT_ORG_NAME = 'Corrix assessment';

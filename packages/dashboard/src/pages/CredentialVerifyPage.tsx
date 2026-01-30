@@ -203,7 +203,7 @@ function ErrorState({ error }: { error: string }) {
       <h2 className="text-xl font-bold text-white">Credential Not Found</h2>
       <p className="text-gray-400">{error}</p>
       <a
-        href="/assessment"
+        href="/quick-assessment"
         className="inline-block mt-4 bg-[#7877df] hover:bg-[#6665c9] text-white px-6 py-2 rounded-lg font-medium transition-colors"
       >
         Get Your Credential
@@ -227,7 +227,7 @@ function InvalidState({ credential }: { credential: Credential }) {
         {new Date(credential.expires_at).toLocaleDateString()}
       </p>
       <a
-        href="/assessment"
+        href="/quick-assessment"
         className="inline-block mt-4 bg-[#7877df] hover:bg-[#6665c9] text-white px-6 py-2 rounded-lg font-medium transition-colors"
       >
         Get a New Credential
@@ -637,7 +637,7 @@ function ValidCredential({ credential }: { credential: Credential }) {
             Conversations analyzed: <span className="text-white">{credential.conversation_count_analyzed}</span>
           </p>
           <a
-            href="/assessment"
+            href="/quick-assessment"
             className="text-[#7877df] hover:underline text-sm"
           >
             Get your own credential →
