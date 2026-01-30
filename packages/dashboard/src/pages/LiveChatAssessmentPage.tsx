@@ -3,102 +3,128 @@ import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-// Scenario categories and variants
+// Industry options
+const INDUSTRIES = [
+  { id: 'tech', name: 'Technology & software', icon: '💻' },
+  { id: 'professional', name: 'Professional services', icon: '💼' },
+  { id: 'marketing', name: 'Marketing & creative', icon: '🎨' },
+  { id: 'healthcare', name: 'Healthcare & life sciences', icon: '🏥' },
+  { id: 'finance', name: 'Finance & banking', icon: '📊' },
+  { id: 'education', name: 'Education & nonprofit', icon: '📚' },
+  { id: 'other', name: 'Other industry', icon: '🏢' },
+];
+
+// Role options
+const ROLES = [
+  { id: 'ic', name: 'Individual contributor', description: 'You focus on your own work and projects' },
+  { id: 'manager', name: 'Manager or team lead', description: 'You manage people or lead a team' },
+  { id: 'director', name: 'Director or senior leader', description: 'You oversee multiple teams or functions' },
+  { id: 'executive', name: 'Executive or founder', description: 'You set strategy for the organization' },
+];
+
+// Scenario categories - updated with clearer descriptions
 const SCENARIO_CATEGORIES = [
   {
     id: 'professional-communication',
-    name: 'Professional communication',
-    description: 'Emails, reports, and workplace documents',
+    name: 'Writing & communication',
+    description: 'Drafting emails, reports, summaries, and workplace documents',
+    example: 'Like asking AI to help write a tricky email or summarize meeting notes',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
       </svg>
     ),
     variants: [
-      { id: 'email-difficult-client', name: 'Email to a difficult client', context: 'responding to a frustrated customer' },
-      { id: 'status-report', name: 'Weekly status report', context: 'summarizing project progress' },
-      { id: 'meeting-summary', name: 'Meeting summary', context: 'documenting key decisions' },
-      { id: 'proposal-feedback', name: 'Proposal feedback request', context: 'asking for input on a draft' },
+      { id: 'email-difficult-client', name: 'Responding to a difficult message', context: 'handling a frustrated client or colleague' },
+      { id: 'status-report', name: 'Writing a status update', context: 'summarizing progress for stakeholders' },
+      { id: 'meeting-summary', name: 'Documenting a meeting', context: 'capturing decisions and action items' },
+      { id: 'proposal-feedback', name: 'Requesting feedback', context: 'asking colleagues for input on your work' },
     ]
   },
   {
     id: 'creative-content',
-    name: 'Creative content',
-    description: 'Marketing, social media, and storytelling',
+    name: 'Content & marketing',
+    description: 'Creating campaigns, articles, newsletters, and brand content',
+    example: 'Like brainstorming social posts or outlining a blog article',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
       </svg>
     ),
     variants: [
-      { id: 'social-campaign', name: 'Social media campaign', context: 'launching a new product' },
-      { id: 'blog-outline', name: 'Blog post outline', context: 'thought leadership piece' },
-      { id: 'tagline-brainstorm', name: 'Tagline brainstorming', context: 'rebranding initiative' },
-      { id: 'newsletter-draft', name: 'Newsletter draft', context: 'monthly company update' },
+      { id: 'social-campaign', name: 'Planning social media content', context: 'promoting a product, service, or announcement' },
+      { id: 'blog-outline', name: 'Outlining an article', context: 'structuring a thought leadership piece' },
+      { id: 'tagline-brainstorm', name: 'Brainstorming messaging', context: 'developing taglines or positioning' },
+      { id: 'newsletter-draft', name: 'Drafting a newsletter', context: 'writing an update for your audience' },
     ]
   },
   {
     id: 'problem-solving',
-    name: 'Problem solving',
-    description: 'Analysis, troubleshooting, and decision-making',
+    name: 'Analysis & problem solving',
+    description: 'Working through decisions, investigating issues, and planning solutions',
+    example: 'Like analyzing options, troubleshooting problems, or assessing risks',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
       </svg>
     ),
     variants: [
-      { id: 'process-improvement', name: 'Process improvement', context: 'identifying workflow bottlenecks' },
-      { id: 'decision-matrix', name: 'Decision matrix', context: 'evaluating vendor options' },
-      { id: 'root-cause', name: 'Root cause analysis', context: 'investigating a recurring issue' },
-      { id: 'risk-assessment', name: 'Risk assessment', context: 'new project planning' },
+      { id: 'process-improvement', name: 'Improving a process', context: 'fixing workflow bottlenecks' },
+      { id: 'decision-matrix', name: 'Comparing options', context: 'evaluating vendors, tools, or approaches' },
+      { id: 'root-cause', name: 'Investigating a problem', context: 'finding why something keeps going wrong' },
+      { id: 'risk-assessment', name: 'Assessing risks', context: 'planning for what could go wrong' },
     ]
   },
   {
     id: 'learning-research',
-    name: 'Learning & research',
-    description: 'Understanding new topics and gathering information',
+    name: 'Research & learning',
+    description: 'Understanding new topics, researching competitors, and getting up to speed',
+    example: 'Like learning about a new trend or researching a competitor',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
       </svg>
     ),
     variants: [
-      { id: 'tech-explainer', name: 'Technology explainer', context: 'understanding AI concepts' },
-      { id: 'competitive-analysis', name: 'Competitive analysis', context: 'market research' },
-      { id: 'best-practices', name: 'Best practices research', context: 'industry standards' },
-      { id: 'concept-summary', name: 'Concept summary', context: 'learning a new skill' },
+      { id: 'tech-explainer', name: 'Understanding a new topic', context: 'learning about trends, technologies, or concepts' },
+      { id: 'competitive-analysis', name: 'Researching competitors', context: 'understanding what others are doing' },
+      { id: 'best-practices', name: 'Finding best practices', context: 'learning how others approach a challenge' },
+      { id: 'concept-summary', name: 'Getting up to speed quickly', context: 'preparing for a meeting or conversation' },
     ]
   },
   {
     id: 'planning-strategy',
     name: 'Planning & strategy',
-    description: 'Projects, goals, and roadmaps',
+    description: 'Setting goals, planning projects, and allocating resources',
+    example: 'Like planning a project kickoff or setting quarterly priorities',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
       </svg>
     ),
     variants: [
-      { id: 'project-kickoff', name: 'Project kickoff plan', context: 'new initiative launch' },
-      { id: 'quarterly-goals', name: 'Quarterly goal setting', context: 'OKR planning' },
-      { id: 'resource-allocation', name: 'Resource allocation', context: 'team capacity planning' },
-      { id: 'timeline-draft', name: 'Timeline drafting', context: 'milestone planning' },
+      { id: 'project-kickoff', name: 'Planning a project kickoff', context: 'launching a new initiative' },
+      { id: 'quarterly-goals', name: 'Setting goals', context: 'defining objectives and success metrics' },
+      { id: 'resource-allocation', name: 'Allocating resources', context: 'deciding how to use limited time or people' },
+      { id: 'timeline-draft', name: 'Creating a timeline', context: 'mapping out milestones and deadlines' },
     ]
   },
   {
     id: 'code-technical',
-    name: 'Code & technical',
-    description: 'Programming, debugging, and technical documentation',
+    name: 'Technical work',
+    description: 'Code reviews, debugging, system design, and technical documentation',
+    example: 'Like reviewing code, debugging issues, or documenting systems',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
       </svg>
     ),
+    isTechnical: true,
     variants: [
-      { id: 'code-review', name: 'Code review', context: 'reviewing a pull request' },
-      { id: 'debug-session', name: 'Debug session', context: 'fixing a tricky bug' },
-      { id: 'api-design', name: 'API design', context: 'planning new endpoints' },
-      { id: 'tech-doc', name: 'Technical documentation', context: 'writing developer docs' },
+      { id: 'code-review', name: 'Reviewing code', context: 'giving feedback on someone\'s work' },
+      { id: 'debug-session', name: 'Debugging an issue', context: 'troubleshooting a tricky problem' },
+      { id: 'api-design', name: 'Designing a system', context: 'planning how something should work' },
+      { id: 'tech-doc', name: 'Writing documentation', context: 'explaining a system for others' },
     ]
   },
 ];
@@ -113,7 +139,7 @@ interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
-  cards?: MessageCard[]; // For assistant messages, split into cards
+  cards?: MessageCard[];
   timestamp: Date;
 }
 
@@ -125,9 +151,14 @@ interface SessionState {
   isComplete: boolean;
 }
 
+type SelectionStep = 'industry' | 'role' | 'category' | 'variant';
+
 export default function LiveChatAssessmentPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState<'select' | 'chat' | 'complete'>('select');
+  const [selectionStep, setSelectionStep] = useState<SelectionStep>('industry');
+  const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [session, setSession] = useState<SessionState>({
@@ -143,14 +174,11 @@ export default function LiveChatAssessmentPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [session.messages]);
 
-  // Parse text into cards (by sentence groups)
   const parseIntoCards = (text: string): MessageCard[] => {
-    // Split by sentence-ending punctuation followed by space
     const sentences = text.split(/(?<=[.!?])\s+/);
     const cards: MessageCard[] = [];
     let currentCard = '';
@@ -158,7 +186,6 @@ export default function LiveChatAssessmentPage() {
 
     for (const sentence of sentences) {
       currentCard += (currentCard ? ' ' : '') + sentence;
-      // Create a new card every 1-2 sentences or if content is long enough
       if (currentCard.length > 80 || sentences.indexOf(sentence) === sentences.length - 1) {
         cards.push({
           id: `card-${cardId++}`,
@@ -172,7 +199,6 @@ export default function LiveChatAssessmentPage() {
     return cards;
   };
 
-  // Start a new session
   const startSession = async () => {
     if (!selectedVariant) return;
 
@@ -183,7 +209,11 @@ export default function LiveChatAssessmentPage() {
       const response = await fetch(`${API_URL}/live-chat/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenarioId: selectedVariant }),
+        body: JSON.stringify({
+          scenarioId: selectedVariant,
+          industry: selectedIndustry,
+          role: selectedRole,
+        }),
       });
 
       if (!response.ok) {
@@ -191,8 +221,6 @@ export default function LiveChatAssessmentPage() {
       }
 
       const data = await response.json();
-
-      // Parse opening message into cards
       const openingCards = parseIntoCards(data.openingMessage);
 
       setSession({
@@ -218,7 +246,6 @@ export default function LiveChatAssessmentPage() {
     }
   };
 
-  // Send a message with streaming
   const sendMessage = async () => {
     if (!inputValue.trim() || !session.sessionId || isLoading) return;
 
@@ -259,7 +286,6 @@ export default function LiveChatAssessmentPage() {
       const decoder = new TextDecoder();
       let fullContent = '';
 
-      // Add initial assistant message with empty cards
       setSession(prev => ({
         ...prev,
         messages: [...prev.messages, {
@@ -286,7 +312,6 @@ export default function LiveChatAssessmentPage() {
               if (data.type === 'chunk') {
                 fullContent += data.content;
 
-                // Show single streaming card while typing
                 setSession(prev => {
                   const messages = [...prev.messages];
                   const lastMsg = messages[messages.length - 1];
@@ -302,7 +327,6 @@ export default function LiveChatAssessmentPage() {
                 });
 
               } else if (data.type === 'done') {
-                // Parse into multiple cards when complete
                 const finalCards = parseIntoCards(fullContent);
 
                 setSession(prev => {
@@ -327,7 +351,7 @@ export default function LiveChatAssessmentPage() {
                 }
               }
             } catch (parseErr) {
-              // Ignore parse errors for partial chunks
+              // Ignore parse errors
             }
           }
         }
@@ -340,7 +364,6 @@ export default function LiveChatAssessmentPage() {
     }
   };
 
-  // Handle key press in textarea
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -348,7 +371,6 @@ export default function LiveChatAssessmentPage() {
     }
   };
 
-  // Get category by variant ID
   const getVariantDetails = (variantId: string) => {
     for (const category of SCENARIO_CATEGORIES) {
       const variant = category.variants.find(v => v.id === variantId);
@@ -359,10 +381,21 @@ export default function LiveChatAssessmentPage() {
     return null;
   };
 
-  // Render scenario selection
+  const goBack = () => {
+    if (selectionStep === 'role') {
+      setSelectionStep('industry');
+      setSelectedRole(null);
+    } else if (selectionStep === 'category') {
+      setSelectionStep('role');
+      setSelectedCategory(null);
+    } else if (selectionStep === 'variant') {
+      setSelectionStep('category');
+      setSelectedVariant(null);
+    }
+  };
+
   const renderScenarioSelection = () => (
     <div className="min-h-screen bg-[#1A1A1A] text-white">
-      {/* Header */}
       <header className="bg-black border-b border-gray-800">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <img src="/images/logo.png" alt="Corrix" className="h-8" />
@@ -375,52 +408,169 @@ export default function LiveChatAssessmentPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-4xl mx-auto px-6 py-12">
-        <div className="text-center mb-10">
-          <h1 className="font-['Young_Serif'] text-3xl mb-3">
-            Choose your scenario
-          </h1>
-          <p className="text-gray-400 max-w-xl mx-auto">
-            Select a scenario that reflects the type of work you typically do with AI. This helps us understand your collaboration style in a realistic context.
-          </p>
+        {/* Progress indicator */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          {['industry', 'role', 'category', 'variant'].map((s, idx) => (
+            <div key={s} className="flex items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                selectionStep === s ? 'bg-[#7877DF] text-white' :
+                ['industry', 'role', 'category', 'variant'].indexOf(selectionStep) > idx ? 'bg-[#7877DF]/30 text-[#7877DF]' :
+                'bg-gray-800 text-gray-500'
+              }`}>
+                {idx + 1}
+              </div>
+              {idx < 3 && <div className={`w-8 h-0.5 ${
+                ['industry', 'role', 'category', 'variant'].indexOf(selectionStep) > idx ? 'bg-[#7877DF]/30' : 'bg-gray-800'
+              }`} />}
+            </div>
+          ))}
         </div>
 
-        {/* Category Selection */}
-        {!selectedCategory ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {SCENARIO_CATEGORIES.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className="bg-[#242424] border border-gray-700 rounded-xl p-6 text-left hover:border-[#7877DF] transition-colors group"
-              >
-                <div className="w-12 h-12 rounded-full bg-[#7877DF]/20 flex items-center justify-center mb-4 text-[#7877DF] group-hover:bg-[#7877DF]/30 transition-colors">
-                  {category.icon}
-                </div>
-                <h3 className="font-['Young_Serif'] text-lg mb-2 group-hover:text-[#7877DF] transition-colors">
-                  {category.name}
-                </h3>
-                <p className="text-gray-500 text-sm">
-                  {category.description}
-                </p>
-              </button>
-            ))}
-          </div>
-        ) : (
-          /* Variant Selection */
-          <div>
+        {/* Industry Selection */}
+        {selectionStep === 'industry' && (
+          <>
+            <div className="text-center mb-10">
+              <h1 className="font-['Young_Serif'] text-3xl mb-3">
+                What industry do you work in?
+              </h1>
+              <p className="text-gray-400 max-w-xl mx-auto">
+                We'll tailor the assessment to reflect scenarios you'd actually encounter in your work with AI.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl mx-auto">
+              {INDUSTRIES.map((industry) => (
+                <button
+                  key={industry.id}
+                  onClick={() => {
+                    setSelectedIndustry(industry.id);
+                    setSelectionStep('role');
+                  }}
+                  className="bg-[#242424] border border-gray-700 rounded-xl p-5 text-left hover:border-[#7877DF] transition-colors group"
+                >
+                  <span className="text-2xl mb-3 block">{industry.icon}</span>
+                  <h3 className="font-medium group-hover:text-[#7877DF] transition-colors">
+                    {industry.name}
+                  </h3>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Role Selection */}
+        {selectionStep === 'role' && (
+          <>
             <button
-              onClick={() => {
-                setSelectedCategory(null);
-                setSelectedVariant(null);
-              }}
+              onClick={goBack}
               className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Back to categories
+              Back
+            </button>
+
+            <div className="text-center mb-10">
+              <h1 className="font-['Young_Serif'] text-3xl mb-3">
+                What's your role?
+              </h1>
+              <p className="text-gray-400 max-w-xl mx-auto">
+                This helps us match you with scenarios at the right level of responsibility.
+              </p>
+            </div>
+
+            <div className="space-y-3 max-w-2xl mx-auto">
+              {ROLES.map((role) => (
+                <button
+                  key={role.id}
+                  onClick={() => {
+                    setSelectedRole(role.id);
+                    setSelectionStep('category');
+                  }}
+                  className="w-full bg-[#242424] border border-gray-700 rounded-xl p-5 text-left hover:border-[#7877DF] transition-colors group"
+                >
+                  <h3 className="font-medium mb-1 group-hover:text-[#7877DF] transition-colors">
+                    {role.name}
+                  </h3>
+                  <p className="text-gray-500 text-sm">{role.description}</p>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Category Selection */}
+        {selectionStep === 'category' && (
+          <>
+            <button
+              onClick={goBack}
+              className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back
+            </button>
+
+            <div className="text-center mb-10">
+              <h1 className="font-['Young_Serif'] text-3xl mb-3">
+                What type of work do you do with AI?
+              </h1>
+              <p className="text-gray-400 max-w-xl mx-auto">
+                Choose the category that best matches how you collaborate with AI day-to-day. This helps us understand your natural collaboration style.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+              {SCENARIO_CATEGORIES.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => {
+                    setSelectedCategory(category.id);
+                    setSelectionStep('variant');
+                  }}
+                  className="bg-[#242424] border border-gray-700 rounded-xl p-6 text-left hover:border-[#7877DF] transition-colors group"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-[#7877DF]/20 flex items-center justify-center text-[#7877DF] flex-shrink-0 group-hover:bg-[#7877DF]/30 transition-colors">
+                      {category.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-['Young_Serif'] text-lg mb-1 group-hover:text-[#7877DF] transition-colors">
+                        {category.name}
+                      </h3>
+                      <p className="text-gray-500 text-sm mb-2">
+                        {category.description}
+                      </p>
+                      <p className="text-gray-600 text-xs italic">
+                        {category.example}
+                      </p>
+                    </div>
+                  </div>
+                  {category.isTechnical && (
+                    <div className="mt-3 text-xs text-gray-600 bg-gray-800/50 rounded px-2 py-1 inline-block">
+                      Best for technical roles
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Variant Selection */}
+        {selectionStep === 'variant' && (
+          <>
+            <button
+              onClick={goBack}
+              className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back
             </button>
 
             {(() => {
@@ -429,17 +579,19 @@ export default function LiveChatAssessmentPage() {
 
               return (
                 <>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-full bg-[#7877DF]/20 flex items-center justify-center text-[#7877DF]">
+                  <div className="text-center mb-10">
+                    <div className="w-16 h-16 rounded-full bg-[#7877DF]/20 flex items-center justify-center text-[#7877DF] mx-auto mb-4">
                       {category.icon}
                     </div>
-                    <div>
-                      <h2 className="font-['Young_Serif'] text-xl">{category.name}</h2>
-                      <p className="text-gray-500 text-sm">{category.description}</p>
-                    </div>
+                    <h1 className="font-['Young_Serif'] text-3xl mb-3">
+                      {category.name}
+                    </h1>
+                    <p className="text-gray-400 max-w-xl mx-auto">
+                      Pick the specific scenario that's closest to work you actually do. The more realistic it feels, the better we can assess your collaboration style.
+                    </p>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-3 max-w-2xl mx-auto">
                     {category.variants.map((variant) => (
                       <button
                         key={variant.id}
@@ -453,7 +605,7 @@ export default function LiveChatAssessmentPage() {
                         <div className="flex items-center justify-between">
                           <div>
                             <h4 className="font-medium mb-1">{variant.name}</h4>
-                            <p className="text-gray-500 text-sm">Context: {variant.context}</p>
+                            <p className="text-gray-500 text-sm">{variant.context}</p>
                           </div>
                           {selectedVariant === variant.id && (
                             <div className="w-6 h-6 rounded-full bg-[#7877DF] flex items-center justify-center">
@@ -477,14 +629,14 @@ export default function LiveChatAssessmentPage() {
                         {isLoading ? 'Starting...' : 'Begin assessment'}
                       </button>
                       <p className="text-gray-500 text-sm mt-3">
-                        This assessment takes approximately 20 minutes
+                        About 15-20 minutes • Your responses are analyzed to understand your collaboration style
                       </p>
                     </div>
                   )}
                 </>
               );
             })()}
-          </div>
+          </>
         )}
 
         {error && (
@@ -496,13 +648,11 @@ export default function LiveChatAssessmentPage() {
     </div>
   );
 
-  // Render chat interface
   const renderChatInterface = () => {
     const variantDetails = selectedVariant ? getVariantDetails(selectedVariant) : null;
 
     return (
       <div className="min-h-screen bg-[#1A1A1A] text-white flex flex-col">
-        {/* Header */}
         <header className="bg-black border-b border-gray-800 flex-shrink-0">
           <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -516,12 +666,11 @@ export default function LiveChatAssessmentPage() {
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <div className={`w-2 h-2 rounded-full ${session.isComplete ? 'bg-green-500' : 'bg-[#7877DF] animate-pulse'}`} />
-              {session.isComplete ? 'Complete' : 'In Progress'}
+              {session.isComplete ? 'Complete' : 'In progress'}
             </div>
           </div>
         </header>
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
             {session.messages.map((message) => (
@@ -561,7 +710,7 @@ export default function LiveChatAssessmentPage() {
               </div>
             ))}
 
-            {isLoading && (
+            {isLoading && !session.messages.some(m => m.role === 'assistant' && m.cards?.some(c => !c.isComplete)) && (
               <div className="flex justify-start">
                 <div className="bg-[#242424] border border-gray-700 rounded-2xl px-5 py-3">
                   <div className="flex items-center gap-2">
@@ -588,7 +737,6 @@ export default function LiveChatAssessmentPage() {
           </div>
         </div>
 
-        {/* Input Area */}
         {!session.isComplete && (
           <div className="border-t border-gray-800 flex-shrink-0">
             <div className="max-w-3xl mx-auto px-6 py-4">
@@ -627,7 +775,6 @@ export default function LiveChatAssessmentPage() {
     );
   };
 
-  // Render based on current step
   if (step === 'select') {
     return renderScenarioSelection();
   }

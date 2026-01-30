@@ -8,11 +8,14 @@ const router = Router();
 // Start a new live chat session
 router.post('/start', async (req: Request, res: Response) => {
   try {
-    const { scenarioId } = req.body;
+    const { scenarioId, industry, role } = req.body;
 
     if (!scenarioId) {
       return res.status(400).json({ error: 'scenarioId is required' });
     }
+
+    // Log user context for future personalization
+    console.log(`[LiveChat] Starting session: scenario=${scenarioId}, industry=${industry}, role=${role}`);
 
     // Get scenario variant
     const scenarioResult = await db.query(

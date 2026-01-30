@@ -39,7 +39,7 @@ getRedisClient();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const BUILD_VERSION = '2026-01-29-v5'; // Streaming card responses
+const BUILD_VERSION = '2026-01-29-v6'; // Accessible scenarios + industry/role selection
 
 // Middleware
 app.use(helmet());
