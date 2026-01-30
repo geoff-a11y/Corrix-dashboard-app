@@ -7,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const SCENARIO_CATEGORIES = [
   {
     id: 'professional-communication',
-    name: 'Professional Communication',
+    name: 'Professional communication',
     description: 'Emails, reports, and workplace documents',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -23,7 +23,7 @@ const SCENARIO_CATEGORIES = [
   },
   {
     id: 'creative-content',
-    name: 'Creative Content',
+    name: 'Creative content',
     description: 'Marketing, social media, and storytelling',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@ const SCENARIO_CATEGORIES = [
   },
   {
     id: 'problem-solving',
-    name: 'Problem Solving',
+    name: 'Problem solving',
     description: 'Analysis, troubleshooting, and decision-making',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@ const SCENARIO_CATEGORIES = [
   },
   {
     id: 'learning-research',
-    name: 'Learning & Research',
+    name: 'Learning & research',
     description: 'Understanding new topics and gathering information',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -71,7 +71,7 @@ const SCENARIO_CATEGORIES = [
   },
   {
     id: 'planning-strategy',
-    name: 'Planning & Strategy',
+    name: 'Planning & strategy',
     description: 'Projects, goals, and roadmaps',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +87,7 @@ const SCENARIO_CATEGORIES = [
   },
   {
     id: 'code-technical',
-    name: 'Code & Technical',
+    name: 'Code & technical',
     description: 'Programming, debugging, and technical documentation',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,7 +285,7 @@ export default function LiveChatAssessmentPage() {
       <main className="max-w-4xl mx-auto px-6 py-12">
         <div className="text-center mb-10">
           <h1 className="font-['Young_Serif'] text-3xl mb-3">
-            Choose Your Scenario
+            Choose your scenario
           </h1>
           <p className="text-gray-400 max-w-xl mx-auto">
             Select a scenario that reflects the type of work you typically do with AI. This helps us understand your collaboration style in a realistic context.
@@ -380,7 +380,7 @@ export default function LiveChatAssessmentPage() {
                         disabled={isLoading}
                         className="bg-[#7877DF] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#6665c4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {isLoading ? 'Starting...' : 'Begin Assessment'}
+                        {isLoading ? 'Starting...' : 'Begin assessment'}
                       </button>
                       <p className="text-gray-500 text-sm mt-3">
                         This assessment takes approximately 20 minutes

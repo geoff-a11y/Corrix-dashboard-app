@@ -14,7 +14,7 @@ export default function AssessmentLandingPage() {
       <main className="max-w-4xl mx-auto px-6 py-16">
         <div className="text-center mb-12">
           <h1 className="font-['Young_Serif'] text-4xl mb-4">
-            Get Your AI Collaboration Assessment
+            Get your AI collaboration assessment
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
             Discover how effectively you collaborate with AI. Choose the assessment format that works best for you.
@@ -37,7 +37,7 @@ export default function AssessmentLandingPage() {
             </div>
 
             <h2 className="font-['Young_Serif'] text-2xl mb-3 group-hover:text-[#7877DF] transition-colors">
-              Quick Assessment
+              Quick assessment
             </h2>
 
             <p className="text-gray-400 mb-4">
@@ -66,7 +66,7 @@ export default function AssessmentLandingPage() {
             </ul>
 
             <div className="mt-6 text-[#7877DF] font-medium flex items-center gap-2">
-              Start Quick Assessment
+              Start quick assessment
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -88,7 +88,7 @@ export default function AssessmentLandingPage() {
             </div>
 
             <h2 className="font-['Young_Serif'] text-2xl mb-3 group-hover:text-[#7877DF] transition-colors">
-              Live Chat Assessment
+              Live chat assessment
             </h2>
 
             <p className="text-gray-400 mb-4">
@@ -117,7 +117,7 @@ export default function AssessmentLandingPage() {
             </ul>
 
             <div className="mt-6 text-[#7877DF] font-medium flex items-center gap-2">
-              Start Live Assessment
+              Start live assessment
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
